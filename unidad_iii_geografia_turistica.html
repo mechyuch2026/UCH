@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unidad III: Potencial Turístico de Asia, África y Oceanía</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Open+Sans:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Open Sans', sans-serif;
+        }
+        h1, h2, h3, h4 {
+            font-family: 'Merriweather', serif;
+        }
+        
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 40vh;
+            max-height: 400px;
+            min-height: 300px;
+        }
+        
+        .tab-btn {
+            transition: all 0.3s ease;
+        }
+        .tab-btn.active {
+            border-bottom: 4px solid #0f766e;
+            color: #0f766e;
+            font-weight: 700;
+        }
+        
+        .content-section {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .content-section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800 antialiased">
+
+    <!-- Chosen Palette: Warm Neutrals (Stone/Slate) with Academic Teal (Teal-700) and Terra Cotta accents. -->
+    <!-- Application Structure Plan: The SPA uses a tabbed navigation system to separate the two main geographic blocks (Asia/ME and Africa/Oceania). This allows students to focus on one macro-region at a time without cognitive overload. Each tab contains didactic text blocks using formal tourism terminology, interactive data visualizations (charts) to illustrate trends, and 'Key Takeaways' sections suitable for Moodle study guides. -->
+    <!-- Visualization & Content Choices: 1. Bar Chart (Asia/ME): Shows projected growth of international arrivals, illustrating the 'shift in power centers'. 2. Doughnut Chart (Africa/Oceania): Illustrates the diversification of the tourism product (from just Safari to Eco/Marine), highlighting the evolution of motivations. NO SVG/Mermaid used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <header class="bg-teal-900 text-stone-50 py-10 shadow-md">
+        <div class="max-w-6xl mx-auto px-6">
+            <p class="text-teal-200 text-sm font-semibold tracking-wider uppercase mb-2">Cátedra: Geografía Turística Continental</p>
+            <h1 class="text-3xl md:text-4xl font-bold mb-4">Unidad III: Potencial Turístico de Asia, África y Oceanía</h1>
+            <p class="text-lg md:text-xl text-stone-300 max-w-3xl leading-relaxed">
+                Análisis de las dinámicas espaciales contemporáneas: el surgimiento de nuevos polos receptivos, la diversificación del producto turístico y los retos de la superestructura ante el imperativo de la sostenibilidad.
+            </p>
+        </div>
+    </header>
+
+    <nav class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="max-w-6xl mx-auto px-6 flex overflow-x-auto">
+            <button onclick="switchTab('intro')" id="tab-intro" class="tab-btn active px-6 py-4 text-stone-500 hover:text-teal-700 whitespace-nowrap font-semibold">
+                Introducción a la Unidad
+            </button>
+            <button onclick="switchTab('asia')" id="tab-asia" class="tab-btn px-6 py-4 text-stone-500 hover:text-teal-700 whitespace-nowrap font-semibold">
+                1. Asia y Medio Oriente
+            </button>
+            <button onclick="switchTab('africa')" id="tab-africa" class="tab-btn px-6 py-4 text-stone-500 hover:text-teal-700 whitespace-nowrap font-semibold">
+                2. África y Oceanía
+            </button>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-6 py-10">
+
+        <section id="content-intro" class="content-section active">
+            <div class="bg-white p-8 rounded-lg shadow-sm border border-stone-200">
+                <h2 class="text-2xl text-teal-800 font-bold mb-4">Presentación del Módulo</h2>
+                <p class="mb-4 leading-relaxed">
+                    Estimados alumnos, en esta tercera unidad abandonamos los flujos turísticos tradicionales (Europa y Norteamérica) para adentrarnos en las macrorregiones que están redefiniendo el mapa turístico mundial. Analizaremos cómo factores geopolíticos, de inversión en infraestructura y nuevas motivaciones de la demanda están reconfigurando el espacio turístico.
+                </p>
+                <div class="grid md:grid-cols-2 gap-6 mt-8">
+                    <div class="bg-stone-100 p-6 rounded border-l-4 border-teal-600">
+                        <h3 class="text-lg font-bold text-stone-800 mb-2">Objetivos de Aprendizaje</h3>
+                        <ul class="list-disc pl-5 space-y-2 text-stone-700">
+                            <li>Identificar los nuevos centros de gravedad del turismo internacional en Asia y Medio Oriente.</li>
+                            <li>Comprender la evolución del Turismo de Intereses Especiales (TIE), específicamente el turismo de aventura.</li>
+                            <li>Analizar el ciclo de vida de los destinos en África y Oceanía, observando la transición de monocultivos turísticos (safari) a ofertas diversificadas.</li>
+                            <li>Evaluar los impactos territoriales y la capacidad de carga en relación con la conservación.</li>
+                        </ul>
+                    </div>
+                    <div class="bg-stone-100 p-6 rounded border-l-4 border-amber-600">
+                        <h3 class="text-lg font-bold text-stone-800 mb-2">Metodología</h3>
+                        <p class="text-stone-700">
+                            Se requiere el análisis crítico de los datos estadísticos presentados a continuación. Utilicen los gráficos interactivos para identificar tendencias temporales y estructurales. Este material será la base para el foro de debate en la plataforma Moodle.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="content-asia" class="content-section">
+            <div class="mb-10">
+                <h2 class="text-3xl text-teal-900 font-bold mb-4 border-b pb-2 border-stone-300">1. Asia y Medio Oriente</h2>
+                <p class="text-lg text-stone-700 leading-relaxed">
+                    Esta sección analiza el desplazamiento del epicentro turístico global hacia el este. Examinaremos el rol de las políticas de estado en la creación de destinos ex-nihilo y la consolidación de cordilleras y selvas asiáticas como mecas del turismo de aventura global.
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-10">
+                <div>
+                    <h3 class="text-xl font-bold text-stone-800 mb-3">El Auge de los Nuevos Centros de Poder Turístico</h3>
+                    <p class="mb-4 text-stone-700 text-justify">
+                        Tradicionalmente considerados espacios de tránsito o emisores emergentes, Medio Oriente (especialmente los países del Golfo) y Asia Oriental han implementado estrategias agresivas de diversificación económica. La inversión masiva en <strong>superestructura</strong> (aerolíneas de bandera como Emirates, Qatar Airways) e <strong>infraestructura turística</strong> (megaproyectos en Arabia Saudita como NEOM, desarrollo hotelero en China continental) ha alterado los flujos globales.
+                    </p>
+                    <p class="mb-6 text-stone-700 text-justify">
+                        Este fenómeno responde a una planificación estatal que busca sustituir rentas petroleras o industriales por la captación de divisas a través de la industria de la hospitalidad, creando en muchos casos <em>destinos burbuja</em> de alto estándar.
+                    </p>
+
+                    <div class="bg-teal-50 p-5 rounded-md border border-teal-100">
+                        <h4 class="font-bold text-teal-800 mb-2">📌 Conceptos Clave</h4>
+                        <ul class="text-sm text-teal-900 space-y-1">
+                            <li><strong>Hubs de Conectividad:</strong> Dubái, Doha, Singapur.</li>
+                            <li><strong>Turismo Ex-Nihilo:</strong> Creación de atractivos desde cero (Islas Palmera, megaproyectos en el Mar Rojo).</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+                    <h3 class="text-lg font-bold text-center text-stone-800 mb-2">Proyección de Llegadas Internacionales: Medio Oriente</h3>
+                    <p class="text-xs text-center text-stone-500 mb-4">Crecimiento histórico y estimaciones prospectivas (Millones de turistas)</p>
+                    <div class="chart-container">
+                        <canvas id="asiaChart"></canvas>
+                    </div>
+                    <p class="text-xs text-stone-500 mt-4 text-center">Nota: Datos simulados con fines didácticos basados en tendencias de OMT prepandemia y proyecciones actuales.</p>
+                </div>
+            </div>
+
+            <div class="mt-12 bg-stone-100 p-8 rounded-lg">
+                <h3 class="text-2xl font-bold text-stone-800 mb-4">El Turismo de Aventura: Apropiación del Espacio Natural</h3>
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="md:col-span-2 text-stone-700 text-justify space-y-4">
+                        <p>
+                            En contraste con el turismo de lujo en el Golfo, regiones de Asia Central, el Himalaya (Nepal, Bután) y el Sudeste Asiático (Vietnam, Tailandia) han capitalizado su topografía para el <strong>Turismo de Intereses Especiales (TIE)</strong>, específicamente el turismo de aventura y expedición.
+                        </p>
+                        <p>
+                            Este segmento requiere menor inversión en infraestructura pesada inicial, apoyándose en el valor intrínseco del paisaje geográfico. Sin embargo, genera tensiones significativas sobre la <strong>capacidad de carga</strong> de ecosistemas frágiles, requiriendo modelos de gestión como cuotas de ingreso (ej. Bután) para mitigar los impactos socioculturales y ambientales negativos.
+                        </p>
+                    </div>
+                    <div class="bg-white p-5 rounded shadow-sm flex flex-col justify-center">
+                        <h4 class="font-bold text-amber-700 text-center mb-2">Zonificación de Aventura</h4>
+                        <ul class="text-sm space-y-3">
+                            <li class="border-b pb-2"><strong>Alta Montaña:</strong> Trekking y alpinismo (Himalaya, Karakórum).</li>
+                            <li class="border-b pb-2"><strong>Selva Tropical:</strong> Ecoturismo y espeleología (Borneo, Sumatra).</li>
+                            <li><strong>Desierto:</strong> Travesías motorizadas y cultura nómada (Wadi Rum, Gobi).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="content-africa" class="content-section">
+            <div class="mb-10">
+                <h2 class="text-3xl text-amber-900 font-bold mb-4 border-b pb-2 border-stone-300">2. África y Oceanía</h2>
+                <p class="text-lg text-stone-700 leading-relaxed">
+                    En este bloque se aborda la evolución del producto turístico en continentes marcados por la vasta riqueza de su biodiversidad. Analizaremos el tránsito metodológico desde productos tradicionales hacia opciones que integran la conservación marina y el desarrollo comunitario como ejes centrales.
+                </p>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-10">
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-stone-200 order-2 lg:order-1">
+                    <h3 class="text-lg font-bold text-center text-stone-800 mb-2">Diversificación de Motivaciones de Viaje (África Subsahariana)</h3>
+                    <p class="text-xs text-center text-stone-500 mb-4">Distribución porcentual de la tipología de turismo</p>
+                    <div class="chart-container">
+                        <canvas id="africaChart"></canvas>
+                    </div>
+                     <p class="text-xs text-stone-500 mt-4 text-center">Nota: Representación didáctica del cambio de un mercado monopólico hacia la diversificación.</p>
+                </div>
+
+                <div class="order-1 lg:order-2">
+                    <h3 class="text-xl font-bold text-stone-800 mb-3">Evolución: Del Safari Fotográfico al Turismo Marino</h3>
+                    <p class="mb-4 text-stone-700 text-justify">
+                        Históricamente, la imagen turística de África estuvo dominada por el <strong>turismo de vida silvestre</strong> o Safari (focalizado en los "Big Five" en Kenia, Tanzania, Sudáfrica). Este modelo, a menudo excluyente de las comunidades locales, está experimentando una transición necesaria hacia el <strong>ecoturismo comunitario</strong>.
+                    </p>
+                    <p class="mb-4 text-stone-700 text-justify">
+                        Simultáneamente, observamos un desplazamiento espacial de los flujos hacia las zonas costeras y sistemas insulares (tanto en África Oriental como en Oceanía). El turismo de buceo y la observación de megafauna marina (ej. Gran Barrera de Coral en Australia, archipiélagos del Índico) se consolidan como productos de alto rendimiento económico.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-12 bg-amber-50 p-8 rounded-lg border border-amber-100">
+                <h3 class="text-2xl font-bold text-stone-800 mb-4">El Desafío Estructural: Infraestructura y Conservación</h3>
+                <p class="text-stone-700 text-justify mb-6">
+                    El crecimiento del turismo en ambas macrorregiones enfrenta barreras estructurales significativas y un dilema inherente a la actividad turística en espacios prístinos.
+                </p>
+                
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h4 class="text-lg font-bold text-amber-800 mb-2">Déficit de Infraestructura</h4>
+                        <p class="text-sm text-stone-700 text-justify">
+                            La conectividad intrarregional es el principal obstáculo. La dependencia de rutas aéreas extra-continentales encarece el destino. Además, la carencia de infraestructura de servicios básicos (agua potable, saneamiento) en áreas remotas limita la expansión de la planta turística y afecta el efecto multiplicador del turismo en la economía local.
+                        </p>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-bold text-teal-800 mb-2">Imperativo de Conservación</h4>
+                        <p class="text-sm text-stone-700 text-justify">
+                            El producto turístico depende de la integridad del recurso natural. Fenómenos globales (blanqueamiento de corales en Oceanía) y presiones locales (caza furtiva, avance de la frontera agrícola en África) amenazan la base del atractivo. La gestión territorial requiere modelos de <strong>gobernanza ambiental</strong> donde los ingresos turísticos financien directamente la conservación.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-stone-800 text-stone-300 py-8 mt-12">
+        <div class="max-w-6xl mx-auto px-6 text-center text-sm">
+            <p>Material Didáctico - Cátedra Geografía Turística Continental</p>
+            <p class="mt-2">Diseñado para la plataforma Moodle - Licenciatura en Turismo</p>
+        </div>
+    </footer>
+
+    <script>
+        const state = {
+            activeTab: 'intro',
+            chartsInitialized: {
+                asia: false,
+                africa: false
+            }
+        };
+
+        const chartColors = {
+            teal: 'rgba(15, 118, 110, 1)',
+            tealBg: 'rgba(15, 118, 110, 0.2)',
+            amber: 'rgba(217, 119, 6, 1)',
+            sky: 'rgba(2, 132, 199, 1)',
+            stone: 'rgba(87, 83, 78, 1)'
+        };
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(`content-${tabId}`).classList.add('active');
+
+            state.activeTab = tabId;
+
+            if (tabId === 'asia' && !state.chartsInitialized.asia) {
+                initAsiaChart();
+                state.chartsInitialized.asia = true;
+            } else if (tabId === 'africa' && !state.chartsInitialized.africa) {
+                initAfricaChart();
+                state.chartsInitialized.africa = true;
+            }
+        }
+
+        function initAsiaChart() {
+            const ctx = document.getElementById('asiaChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['2010', '2015', '2019', '2023', '2030 (Proy.)'],
+                    datasets: [{
+                        label: 'Llegadas Internacionales (Millones)',
+                        data: [54, 61, 73, 87, 122],
+                        backgroundColor: chartColors.tealBg,
+                        borderColor: chartColors.teal,
+                        borderWidth: 2,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y + ' Millones de Turistas';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Volumen (Millones)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function initAfricaChart() {
+            const ctx = document.getElementById('africaChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [
+                        'Safari / Vida Silvestre', 
+                        'Ecoturismo Comunitario', 
+                        'Turismo Marino / Buceo', 
+                        'Cultural / Urbano'
+                    ],
+                    datasets: [{
+                        data: [45, 25, 20, 10],
+                        backgroundColor: [
+                            chartColors.amber,
+                            chartColors.teal,
+                            chartColors.sky,
+                            chartColors.stone
+                        ],
+                        borderWidth: 1,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: { position: 'right' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) { label += ': '; }
+                                    label += context.parsed + '% de cuota de mercado';
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

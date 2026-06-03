@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geografía Cuestionario</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh; padding: 20px; color: #333;
+}
+.container { max-width: 700px; margin: 0 auto; }
+.header { text-align: center; color: #fff; padding: 30px 20px; }
+.header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+.header .meta { font-size: 14px; opacity: 0.9; }
+.progress-bar { background: rgba(255,255,255,0.3); border-radius: 10px; height: 8px; margin: 20px 0; overflow: hidden; }
+.progress-fill { background: #fff; height: 100%; width: 0%; transition: width 0.4s ease; border-radius: 10px; }
+.question { background: #fff; border-radius: 16px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
+.question.active { display: block; }
+.q-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; color: #888; }
+.q-number { font-weight: 600; color: #667eea; }
+.q-text { font-size: 18px; font-weight: 600; line-height: 1.5; margin-bottom: 25px; color: #222; }
+.options { display: flex; flex-direction: column; gap: 12px; }
+.option-wrapper { display: flex; flex-direction: column; }
+.option {
+  display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px;
+  border: 2px solid #e8e8e8; border-radius: 12px; background: #fafafa;
+  cursor: pointer; transition: all 0.2s; text-align: left; font-size: 15px; width: 100%;
+}
+[dir="rtl"] .option { text-align: right; flex-direction: row-reverse; }
+.option:hover:not(.disabled) { border-color: #667eea; background: #f5f3ff; }
+.option.selected { border-color: #667eea; background: #ede9fe; }
+.option.correct { border-color: #22c55e; background: #dcfce7; }
+.option.incorrect { border-color: #ef4444; background: #fee2e2; }
+.option.disabled { cursor: default; }
+.option.show-correct { border-color: #22c55e; background: #dcfce7; }
+.opt-label {
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50%; background: #e8e8e8;
+  font-weight: 700; font-size: 14px; flex-shrink: 0;
+}
+.option.selected .opt-label { background: #667eea; color: #fff; }
+.option.correct .opt-label { background: #22c55e; color: #fff; }
+.option.incorrect .opt-label { background: #ef4444; color: #fff; }
+.option.show-correct .opt-label { background: #22c55e; color: #fff; }
+.opt-text { padding-top: 5px; line-height: 1.5; }
+
+/* Individual option feedback */
+.option-feedback {
+  margin: 8px 0 4px 46px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+[dir="rtl"] .option-feedback { margin-left: 0; margin-right: 46px; }
+.option-feedback.correct-feedback {
+  background: #dcfce7;
+  border-left: 3px solid #22c55e;
+}
+.option-feedback.incorrect-feedback {
+  background: #fef3f2;
+  border-left: 3px solid #fca5a5;
+}
+[dir="rtl"] .option-feedback.correct-feedback,
+[dir="rtl"] .option-feedback.incorrect-feedback {
+  border-left: none;
+  border-right: 3px solid;
+}
+[dir="rtl"] .option-feedback.correct-feedback { border-right-color: #22c55e; }
+[dir="rtl"] .option-feedback.incorrect-feedback { border-right-color: #fca5a5; }
+.feedback-status {
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.feedback-status.correct { color: #166534; }
+.feedback-status.incorrect { color: #991b1b; }
+.feedback-rationale { color: #444; }
+
+/* Hint box */
+.hint-box {
+  margin: 12px 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+}
+.hint-toggle {
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #92400e;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hint-toggle:hover { background: #fef3c7; }
+.hint-content {
+  padding: 0 16px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s, padding 0.3s;
+  font-size: 14px;
+  color: #78350f;
+  line-height: 1.5;
+}
+.hint-box.show .hint-content {
+  padding: 0 16px 12px;
+  max-height: 200px;
+}
+
+.next-btn {
+  margin-top: 20px; width: 100%; padding: 14px;
+  background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border: none;
+  border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.next-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
+.hidden { display: none !important; }
+.results { background: #fff; border-radius: 16px; padding: 40px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
+.results.active { display: block; }
+.results h2 { font-size: 28px; margin-bottom: 10px; color: #333; }
+.results .score { font-size: 64px; font-weight: 700; color: #667eea; margin: 20px 0; }
+.results .score-text { font-size: 18px; color: #666; margin-bottom: 30px; }
+.restart-btn {
+  padding: 14px 40px; background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+}
+
+/* Math CSS */
+.math, .math-block { font-family: "Cambria Math", "Times New Roman", Times, serif; font-style: italic; }
+.math-block { display: block; text-align: center; margin: 10px 0; font-size: 110%; }
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 3px; font-size: 0.9em; }
+.frac-num { border-bottom: 1px solid currentColor; padding: 0 4px 2px; line-height: 1.2; }
+.frac-den { padding: 2px 4px 0; line-height: 1.2; }
+.sqrt { white-space: nowrap; }
+.sqrt-content { border-top: 1px solid currentColor; padding: 0 3px; margin-left: 2px; }
+sup, sub { font-size: 0.75em; }
+sup { vertical-align: super; }
+sub { vertical-align: sub; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Geografía Cuestionario</h1>
+    <div class="meta">10 questions</div>
+    <div class="progress-bar"><div class="progress-fill"></div></div>
+  </div>
+  <div id="quiz-container">
+        <div class="question" data-index="0">
+          <div class="q-header">
+            <span class="q-number">Question 1</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">¿Cuál fue la modificación principal en la escala física proyectada para 'The Line' en NEOM para la meta del año 2030?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considera cómo afectaron las restricciones financieras a la longitud planificada de la ciudad lineal.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Aunque esa es la zona de ubicación, la tendencia actual del proyecto no es de expansión, sino de reducción de escala.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Se expandió para conectar la provincia de Tabuk con el Golfo de Aqaba.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque esa es la zona de ubicación, la tendencia actual del proyecto no es de expansión, sino de reducción de escala.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="El puerto octogonal es un subproyecto distinto denominado Oxagon, no una reconversión de The Line.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Se canceló la estructura lineal para convertirla en un puerto octogonal flotante.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El puerto octogonal es un subproyecto distinto denominado Oxagon, no una reconversión de The Line.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Esta contracción drástica se debió a severas restricciones presupuestarias y fluctuaciones macroeconómicas en el precio del crudo.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Se redujo de una extensión de 170 kilómetros a solo 2.4 kilómetros.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta contracción drástica se debió a severas restricciones presupuestarias y fluctuaciones macroeconómicas en el precio del crudo.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="La meta de población de hecho disminuyó de 1.5 millones a menos de 300,000 habitantes para 2030.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Se incrementó la capacidad de residentes a 3 millones para compensar costos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La meta de población de hecho disminuyó de 1.5 millones a menos de 300,000 habitantes para 2030.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="1">
+          <div class="q-header">
+            <span class="q-number">Question 2</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">De acuerdo con la Asociación de Comercio de Viajes de Aventura (ATTA), ¿qué porcentaje de los viajeros internacionales de Asia se definen como 'abiertos a la aventura'?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Busca una cifra mayoritaria que refleje una clara disposición hacia experiencias activas y descubrimientos.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="El 16% es la tasa de crecimiento anual compuesto proyectada para el mercado, no el porcentaje de viajeros interesados.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">16%</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El 16% es la tasa de crecimiento anual compuesto proyectada para el mercado, no el porcentaje de viajeros interesados.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Este porcentaje se relaciona con la hegemonía de arribos aéreos de Fiyi en la región del Pacífico, no con el comportamiento del emisor asiático.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">51%</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este porcentaje se relaciona con la hegemonía de arribos aéreos de Fiyi en la región del Pacífico, no con el comportamiento del emisor asiático.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Este alto porcentaje indica un cambio significativo respecto al modelo tradicional de tours masivos programados en el mercado asiático.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">72%</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este alto porcentaje indica un cambio significativo respecto al modelo tradicional de tours masivos programados en el mercado asiático.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Este valor corresponde específicamente al segmento de 'Exploradores Culturales', que es solo una parte de los interesados en la aventura.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">28%</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este valor corresponde específicamente al segmento de 'Exploradores Culturales', que es solo una parte de los interesados en la aventura.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="2">
+          <div class="q-header">
+            <span class="q-number">Question 3</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">¿En qué consiste el modelo estratégico de turismo implementado por Botswana en el Delta del Okavango?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piensa en un enfoque que prioriza la exclusividad económica sobre la cantidad de personas.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Aunque existen reservas, la estrategia nacional se basa en el ecoturismo y la preservación de la fauna silvestre para el avistamiento.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Fomento exclusivo del turismo de caza deportiva transnacional.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque existen reservas, la estrategia nacional se basa en el ecoturismo y la preservación de la fauna silvestre para el avistamiento.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="El modelo de Botswana es opuesto al turismo de masas, ya que busca limitar el volumen físico de visitantes para proteger el ecosistema.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Turismo de masas con tarifas subsidiadas por el estado.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El modelo de Botswana es opuesto al turismo de masas, ya que busca limitar el volumen físico de visitantes para proteger el ecosistema.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Esta estrategia maximiza los ingresos económicos por turista mediante servicios de lujo exclusivo mientras minimiza el impacto ecológico.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Modelo de 'alto valor y bajo volumen'.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta estrategia maximiza los ingresos económicos por turista mediante servicios de lujo exclusivo mientras minimiza el impacto ecológico.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Botswana utiliza un sistema de concesiones y límites de vehículos, no infraestructuras ferroviarias masivas dentro del Delta.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Desarrollo de infraestructura ferroviaria de alta velocidad para safaris.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Botswana utiliza un sistema de concesiones y límites de vehículos, no infraestructuras ferroviarias masivas dentro del Delta.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="3">
+          <div class="q-header">
+            <span class="q-number">Question 4</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">¿Qué problema socio-espacial se asocia con el 'turismo de enclave' en el contexto de los safaris africanos?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Reflexiona sobre quiénes son los dueños de las concesiones de lujo y hacia dónde fluye el capital.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="Debido a que los operadores suelen ser extranjeros, gran parte de las ganancias no se quedan en la economía local del país anfitrión.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">La repatriación de utilidades por parte de corporaciones transnacionales.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Debido a que los operadores suelen ser extranjeros, gran parte de las ganancias no se quedan en la economía local del país anfitrión.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="El turismo de enclave suele caracterizarse por el aislamiento y la falta de integración con las redes de transporte locales.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">La saturación de transporte multimodal en áreas rurales.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El turismo de enclave suele caracterizarse por el aislamiento y la falta de integración con las redes de transporte locales.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="El enclave tiende a crear una brecha tecnológica y económica, no a facilitar la democratización de recursos.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">La democratización tecnológica de las comunidades locales.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El enclave tiende a crear una brecha tecnológica y económica, no a facilitar la democratización de recursos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Al contrario, estos modelos a menudo excluyen a las poblaciones nativas de sus territorios históricos.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">El aumento excesivo de la población residente en zonas protegidas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Al contrario, estos modelos a menudo excluyen a las poblaciones nativas de sus territorios históricos.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="4">
+          <div class="q-header">
+            <span class="q-number">Question 5</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">¿Qué porcentaje de la red ferroviaria mundial posee el continente africano, evidenciando una brecha histórica de infraestructura?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Se trata de una cifra muy baja que contrasta con la extensión territorial del continente.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="Con solo 54,000 kilómetros de vías de un total mundial de más de un millón, la red ferroviaria africana es sumamente precaria.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">5%</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Con solo 54,000 kilómetros de vías de un total mundial de más de un millón, la red ferroviaria africana es sumamente precaria.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="El 80% corresponde al volumen de tráfico que absorben las carreteras debido a la falta de otras alternativas de transporte.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">80%</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El 80% corresponde al volumen de tráfico que absorben las carreteras debido a la falta de otras alternativas de transporte.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Este número representa el porcentaje de las exportaciones de servicios totales que genera el turismo en el continente.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">41%</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este número representa el porcentaje de las exportaciones de servicios totales que genera el turismo en el continente.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="El 15% es el porcentaje aproximado de presupuestos que se pierden por corrupción en infraestructuras en ciertos países, no la cuota ferroviaria.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">15%</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El 15% es el porcentaje aproximado de presupuestos que se pierden por corrupción en infraestructuras en ciertos países, no la cuota ferroviaria.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="5">
+          <div class="q-header">
+            <span class="q-number">Question 6</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">En la gestión ambiental de Palau, ¿qué significa el concepto ancestral de 'BUL'?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Se relaciona con una decisión tradicional de detener la explotación de algo para preservarlo.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Aunque Palau prohibió los protectores químicos, el BUL es un concepto de gestión de recursos, no un impuesto.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Un impuesto verde aplicado a los protectores solares químicos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque Palau prohibió los protectores químicos, el BUL es un concepto de gestión de recursos, no un impuesto.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="Es una práctica tradicional donde los líderes decretan la prohibición inmediata de pesca o consumo para permitir la recuperación ecológica.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Una moratoria absoluta sobre el uso de un recurso natural en peligro.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Es una práctica tradicional donde los líderes decretan la prohibición inmediata de pesca o consumo para permitir la recuperación ecológica.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="El compromiso en el pasaporte es el 'Palau Pledge', el cual se fundamenta en el BUL pero es un mecanismo migratorio distinto.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Un compromiso que los turistas deben firmar en su pasaporte.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El compromiso en el pasaporte es el 'Palau Pledge', el cual se fundamenta en el BUL pero es un mecanismo migratorio distinto.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="El BUL se refiere a la conservación de la biodiversidad marina y terrestre, no a la logística de transporte.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Un sistema de transporte multimodal para islas ultraperiféricas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El BUL se refiere a la conservación de la biodiversidad marina y terrestre, no a la logística de transporte.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="6">
+          <div class="q-header">
+            <span class="q-number">Question 7</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">Para determinar los límites de visitantes en ecosistemas arrecifales, la geografía turística utiliza la fórmula de la Capacidad de Carga Real (<span class="math">CC<sub>R</sub></span>). ¿Cuál es la expresión correcta de esta fórmula?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Recuerda que los factores de corrección actúan como multiplicadores que reducen la capacidad física teórica.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Dividir aumentaría la capacidad de carga si los factores son menores a 1, lo cual es opuesto al principio de precaución ambiental.">
+            <span class="opt-label">A</span>
+            <span class="opt-text"><span class="math">CC<sub>R</sub> = fracCC<sub>F</sub>CF<sub>fis</sub> × CF<sub>bio</sub></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Dividir aumentaría la capacidad de carga si los factores son menores a 1, lo cual es opuesto al principio de precaución ambiental.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="Esta fórmula adapta la capacidad física mediante factores de corrección físicos y de sensibilidad biótica de las comunidades marinas.">
+            <span class="opt-label">B</span>
+            <span class="opt-text"><span class="math">CC<sub>R</sub> = CC<sub>F</sub> × CF<sub>fis</sub> × CF<sub>bio</sub></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta fórmula adapta la capacidad física mediante factores de corrección físicos y de sensibilidad biótica de las comunidades marinas.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Los factores de corrección suelen ser multiplicativos, ya que representan porcentajes de reducción de la capacidad total basada en restricciones.">
+            <span class="opt-label">C</span>
+            <span class="opt-text"><span class="math">CC<sub>R</sub> = CC<sub>F</sub> + CF<sub>fis</sub> + CF<sub>bio</sub></span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Los factores de corrección suelen ser multiplicativos, ya que representan porcentajes de reducción de la capacidad total basada en restricciones.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="La fórmula requiere la integración conjunta de ambos factores limitantes, no su sustracción.">
+            <span class="opt-label">D</span>
+            <span class="opt-text"><span class="math">CC<sub>R</sub> = CC<sub>F</sub> × (CF<sub>fis</sub> - CF<sub>bio</sub>)</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La fórmula requiere la integración conjunta de ambos factores limitantes, no su sustracción.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="7">
+          <div class="q-header">
+            <span class="q-number">Question 8</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">¿Cuál es el propósito del 'Palau Pledge' implementado en 2017?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Es un mecanismo legal y psicológico que involucra la firma del visitante al ingresar al país.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="Al firmar el compromiso en su pasaporte, el visitante acepta actuar de manera responsable hacia las futuras generaciones de la isla.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Funcionar como un 'empujón verde' que responsabiliza al turista mediante su firma.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Al firmar el compromiso en su pasaporte, el visitante acepta actuar de manera responsable hacia las futuras generaciones de la isla.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="La ley del santuario restringe la pesca industrial en el 80% de la ZEE; el Pledge es un compromiso conductual del visitante.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Garantizar que el 20% de la zona económica sea para pesca industrial.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La ley del santuario restringe la pesca industrial en el 80% de la ZEE; el Pledge es un compromiso conductual del visitante.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Aunque existen tasas verdes, el Pledge es una declaración de principios éticos y ecológicos, no un comprobante de pago.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Certificar que el turista ha pagado todas las tasas de navegación de yates.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque existen tasas verdes, el Pledge es una declaración de principios éticos y ecológicos, no un comprobante de pago.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="El Pledge de hecho modifica las leyes migratorias para añadir un requisito de entrada, no para eliminarlos.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Eliminar la necesidad de visas para turistas de mercados de larga distancia.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El Pledge de hecho modifica las leyes migratorias para añadir un requisito de entrada, no para eliminarlos.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="8">
+          <div class="q-header">
+            <span class="q-number">Question 9</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">¿Qué contradicción ecológica enfrenta el proyecto NEOM respecto al suministro de agua potable?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considera el subproducto de convertir agua de mar en agua potable en una región hiperárida.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Trojena planea usar nieve artificial, pero el problema del agua potable a gran escala se centra en el litoral.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">La dependencia de glaciares artificiales en las montañas de Trojena.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Trojena planea usar nieve artificial, pero el problema del agua potable a gran escala se centra en el litoral.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="NEOM afirma que usará energía 100% renovable; el conflicto crítico es el residuo del proceso (salmuera), no la fuente de energía.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">La falta de energía renovable para alimentar las plantas de tratamiento.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">NEOM afirma que usará energía 100% renovable; el conflicto crítico es el residuo del proceso (salmuera), no la fuente de energía.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Los procesos masivos de desalinización necesarios en el clima árido producen residuos químicos que amenazan los ecosistemas del Mar Rojo.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">La generación de salmuera concentrada por desalinización que daña los corales.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Los procesos masivos de desalinización necesarios en el clima árido producen residuos químicos que amenazan los ecosistemas del Mar Rojo.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Aunque hay un conflicto social con la tribu, la amenaza ecológica principal mencionada es el impacto de la infraestructura técnica de desalinización.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">El agotamiento de los acuíferos compartidos con la tribu Huwaitat.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque hay un conflicto social con la tribu, la amenaza ecológica principal mencionada es el impacto de la infraestructura técnica de desalinización.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      
+        <div class="question" data-index="9">
+          <div class="q-header">
+            <span class="q-number">Question 10</span>
+            <span class="q-of">/ 10</span>
+          </div>
+          <div class="q-text">¿Cuál es la principal motivación del segmento de 'Exploradores Culturales' en el mercado de aventura asiático?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Este grupo busca el aprendizaje y la conexión con el legado histórico y humano del destino.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Este perfil corresponde a los 'Intensivos de Aventura', no a los exploradores culturales.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">La superación de hitos físicos en geografías extremas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este perfil corresponde a los 'Intensivos de Aventura', no a los exploradores culturales.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Estas características son típicas del segmento de 'aventura suave' en adultos de 30 a 50 años.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">La búsqueda de confort logístico y seguridad en traslados familiares.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Estas características son típicas del segmento de 'aventura suave' en adultos de 30 a 50 años.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Este grupo prioriza la gastronomía tradicional y el contacto directo con la historia y la gente local.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">La autenticidad, el aprendizaje del patrimonio e interacción con comunidades.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este grupo prioriza la gastronomía tradicional y el contacto directo con la historia y la gente local.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Este es el enfoque primordial de los 'Entusiastas de la Naturaleza'.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">La observación exclusiva de fauna silvestre y paisajes vírgenes.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este es el enfoque primordial de los 'Entusiastas de la Naturaleza'.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Next Question →</button>
+        </div>
+      </div>
+  <div class="results" id="results">
+    <h2>Quiz Complete!</h2>
+    <div class="score" id="score">0%</div>
+    <div class="score-text" id="score-text"></div>
+    <button class="restart-btn" onclick="restart()">Try Again</button>
+  </div>
+</div>
+<script>
+const quizData = [{"question":"¿Cuál fue la modificación principal en la escala física proyectada para 'The Line' en NEOM para la meta del año 2030?","hint":"Considera cómo afectaron las restricciones financieras a la longitud planificada de la ciudad lineal.","options":[{"label":"A","text":"Se expandió para conectar la provincia de Tabuk con el Golfo de Aqaba.","isCorrect":false,"rationale":"Aunque esa es la zona de ubicación, la tendencia actual del proyecto no es de expansión, sino de reducción de escala."},{"label":"B","text":"Se canceló la estructura lineal para convertirla en un puerto octogonal flotante.","isCorrect":false,"rationale":"El puerto octogonal es un subproyecto distinto denominado Oxagon, no una reconversión de The Line."},{"label":"C","text":"Se redujo de una extensión de 170 kilómetros a solo 2.4 kilómetros.","isCorrect":true,"rationale":"Esta contracción drástica se debió a severas restricciones presupuestarias y fluctuaciones macroeconómicas en el precio del crudo."},{"label":"D","text":"Se incrementó la capacidad de residentes a 3 millones para compensar costos.","isCorrect":false,"rationale":"La meta de población de hecho disminuyó de 1.5 millones a menos de 300,000 habitantes para 2030."}]},{"question":"De acuerdo con la Asociación de Comercio de Viajes de Aventura (ATTA), ¿qué porcentaje de los viajeros internacionales de Asia se definen como 'abiertos a la aventura'?","hint":"Busca una cifra mayoritaria que refleje una clara disposición hacia experiencias activas y descubrimientos.","options":[{"label":"A","text":"16%","isCorrect":false,"rationale":"El 16% es la tasa de crecimiento anual compuesto proyectada para el mercado, no el porcentaje de viajeros interesados."},{"label":"B","text":"51%","isCorrect":false,"rationale":"Este porcentaje se relaciona con la hegemonía de arribos aéreos de Fiyi en la región del Pacífico, no con el comportamiento del emisor asiático."},{"label":"C","text":"72%","isCorrect":true,"rationale":"Este alto porcentaje indica un cambio significativo respecto al modelo tradicional de tours masivos programados en el mercado asiático."},{"label":"D","text":"28%","isCorrect":false,"rationale":"Este valor corresponde específicamente al segmento de 'Exploradores Culturales', que es solo una parte de los interesados en la aventura."}]},{"question":"¿En qué consiste el modelo estratégico de turismo implementado por Botswana en el Delta del Okavango?","hint":"Piensa en un enfoque que prioriza la exclusividad económica sobre la cantidad de personas.","options":[{"label":"A","text":"Fomento exclusivo del turismo de caza deportiva transnacional.","isCorrect":false,"rationale":"Aunque existen reservas, la estrategia nacional se basa en el ecoturismo y la preservación de la fauna silvestre para el avistamiento."},{"label":"B","text":"Turismo de masas con tarifas subsidiadas por el estado.","isCorrect":false,"rationale":"El modelo de Botswana es opuesto al turismo de masas, ya que busca limitar el volumen físico de visitantes para proteger el ecosistema."},{"label":"C","text":"Modelo de 'alto valor y bajo volumen'.","isCorrect":true,"rationale":"Esta estrategia maximiza los ingresos económicos por turista mediante servicios de lujo exclusivo mientras minimiza el impacto ecológico."},{"label":"D","text":"Desarrollo de infraestructura ferroviaria de alta velocidad para safaris.","isCorrect":false,"rationale":"Botswana utiliza un sistema de concesiones y límites de vehículos, no infraestructuras ferroviarias masivas dentro del Delta."}]},{"question":"¿Qué problema socio-espacial se asocia con el 'turismo de enclave' en el contexto de los safaris africanos?","hint":"Reflexiona sobre quiénes son los dueños de las concesiones de lujo y hacia dónde fluye el capital.","options":[{"label":"A","text":"La repatriación de utilidades por parte de corporaciones transnacionales.","isCorrect":true,"rationale":"Debido a que los operadores suelen ser extranjeros, gran parte de las ganancias no se quedan en la economía local del país anfitrión."},{"label":"B","text":"La saturación de transporte multimodal en áreas rurales.","isCorrect":false,"rationale":"El turismo de enclave suele caracterizarse por el aislamiento y la falta de integración con las redes de transporte locales."},{"label":"C","text":"La democratización tecnológica de las comunidades locales.","isCorrect":false,"rationale":"El enclave tiende a crear una brecha tecnológica y económica, no a facilitar la democratización de recursos."},{"label":"D","text":"El aumento excesivo de la población residente en zonas protegidas.","isCorrect":false,"rationale":"Al contrario, estos modelos a menudo excluyen a las poblaciones nativas de sus territorios históricos."}]},{"question":"¿Qué porcentaje de la red ferroviaria mundial posee el continente africano, evidenciando una brecha histórica de infraestructura?","hint":"Se trata de una cifra muy baja que contrasta con la extensión territorial del continente.","options":[{"label":"A","text":"5%","isCorrect":true,"rationale":"Con solo 54,000 kilómetros de vías de un total mundial de más de un millón, la red ferroviaria africana es sumamente precaria."},{"label":"B","text":"80%","isCorrect":false,"rationale":"El 80% corresponde al volumen de tráfico que absorben las carreteras debido a la falta de otras alternativas de transporte."},{"label":"C","text":"41%","isCorrect":false,"rationale":"Este número representa el porcentaje de las exportaciones de servicios totales que genera el turismo en el continente."},{"label":"D","text":"15%","isCorrect":false,"rationale":"El 15% es el porcentaje aproximado de presupuestos que se pierden por corrupción en infraestructuras en ciertos países, no la cuota ferroviaria."}]},{"question":"En la gestión ambiental de Palau, ¿qué significa el concepto ancestral de 'BUL'?","hint":"Se relaciona con una decisión tradicional de detener la explotación de algo para preservarlo.","options":[{"label":"A","text":"Un impuesto verde aplicado a los protectores solares químicos.","isCorrect":false,"rationale":"Aunque Palau prohibió los protectores químicos, el BUL es un concepto de gestión de recursos, no un impuesto."},{"label":"B","text":"Una moratoria absoluta sobre el uso de un recurso natural en peligro.","isCorrect":true,"rationale":"Es una práctica tradicional donde los líderes decretan la prohibición inmediata de pesca o consumo para permitir la recuperación ecológica."},{"label":"C","text":"Un compromiso que los turistas deben firmar en su pasaporte.","isCorrect":false,"rationale":"El compromiso en el pasaporte es el 'Palau Pledge', el cual se fundamenta en el BUL pero es un mecanismo migratorio distinto."},{"label":"D","text":"Un sistema de transporte multimodal para islas ultraperiféricas.","isCorrect":false,"rationale":"El BUL se refiere a la conservación de la biodiversidad marina y terrestre, no a la logística de transporte."}]},{"question":"Para determinar los límites de visitantes en ecosistemas arrecifales, la geografía turística utiliza la fórmula de la Capacidad de Carga Real ($CC_R$). ¿Cuál es la expresión correcta de esta fórmula?","hint":"Recuerda que los factores de corrección actúan como multiplicadores que reducen la capacidad física teórica.","options":[{"label":"A","text":"$CC_R = \\frac{CC_F}{CF_{fis} \\times CF_{bio}}$","isCorrect":false,"rationale":"Dividir aumentaría la capacidad de carga si los factores son menores a 1, lo cual es opuesto al principio de precaución ambiental."},{"label":"B","text":"$CC_R = CC_F \\times CF_{fis} \\times CF_{bio}$","isCorrect":true,"rationale":"Esta fórmula adapta la capacidad física mediante factores de corrección físicos y de sensibilidad biótica de las comunidades marinas."},{"label":"C","text":"$CC_R = CC_F + CF_{fis} + CF_{bio}$","isCorrect":false,"rationale":"Los factores de corrección suelen ser multiplicativos, ya que representan porcentajes de reducción de la capacidad total basada en restricciones."},{"label":"D","text":"$CC_R = CC_F \\times (CF_{fis} - CF_{bio})$","isCorrect":false,"rationale":"La fórmula requiere la integración conjunta de ambos factores limitantes, no su sustracción."}]},{"question":"¿Cuál es el propósito del 'Palau Pledge' implementado en 2017?","hint":"Es un mecanismo legal y psicológico que involucra la firma del visitante al ingresar al país.","options":[{"label":"A","text":"Funcionar como un 'empujón verde' que responsabiliza al turista mediante su firma.","isCorrect":true,"rationale":"Al firmar el compromiso en su pasaporte, el visitante acepta actuar de manera responsable hacia las futuras generaciones de la isla."},{"label":"B","text":"Garantizar que el 20% de la zona económica sea para pesca industrial.","isCorrect":false,"rationale":"La ley del santuario restringe la pesca industrial en el 80% de la ZEE; el Pledge es un compromiso conductual del visitante."},{"label":"C","text":"Certificar que el turista ha pagado todas las tasas de navegación de yates.","isCorrect":false,"rationale":"Aunque existen tasas verdes, el Pledge es una declaración de principios éticos y ecológicos, no un comprobante de pago."},{"label":"D","text":"Eliminar la necesidad de visas para turistas de mercados de larga distancia.","isCorrect":false,"rationale":"El Pledge de hecho modifica las leyes migratorias para añadir un requisito de entrada, no para eliminarlos."}]},{"question":"¿Qué contradicción ecológica enfrenta el proyecto NEOM respecto al suministro de agua potable?","hint":"Considera el subproducto de convertir agua de mar en agua potable en una región hiperárida.","options":[{"label":"A","text":"La dependencia de glaciares artificiales en las montañas de Trojena.","isCorrect":false,"rationale":"Trojena planea usar nieve artificial, pero el problema del agua potable a gran escala se centra en el litoral."},{"label":"B","text":"La falta de energía renovable para alimentar las plantas de tratamiento.","isCorrect":false,"rationale":"NEOM afirma que usará energía 100% renovable; el conflicto crítico es el residuo del proceso (salmuera), no la fuente de energía."},{"label":"C","text":"La generación de salmuera concentrada por desalinización que daña los corales.","isCorrect":true,"rationale":"Los procesos masivos de desalinización necesarios en el clima árido producen residuos químicos que amenazan los ecosistemas del Mar Rojo."},{"label":"D","text":"El agotamiento de los acuíferos compartidos con la tribu Huwaitat.","isCorrect":false,"rationale":"Aunque hay un conflicto social con la tribu, la amenaza ecológica principal mencionada es el impacto de la infraestructura técnica de desalinización."}]},{"question":"¿Cuál es la principal motivación del segmento de 'Exploradores Culturales' en el mercado de aventura asiático?","hint":"Este grupo busca el aprendizaje y la conexión con el legado histórico y humano del destino.","options":[{"label":"A","text":"La superación de hitos físicos en geografías extremas.","isCorrect":false,"rationale":"Este perfil corresponde a los 'Intensivos de Aventura', no a los exploradores culturales."},{"label":"B","text":"La búsqueda de confort logístico y seguridad en traslados familiares.","isCorrect":false,"rationale":"Estas características son típicas del segmento de 'aventura suave' en adultos de 30 a 50 años."},{"label":"C","text":"La autenticidad, el aprendizaje del patrimonio e interacción con comunidades.","isCorrect":true,"rationale":"Este grupo prioriza la gastronomía tradicional y el contacto directo con la historia y la gente local."},{"label":"D","text":"La observación exclusiva de fauna silvestre y paisajes vírgenes.","isCorrect":false,"rationale":"Este es el enfoque primordial de los 'Entusiastas de la Naturaleza'."}]}];
+const tr = {"correct":"Correct!","incorrect":"Incorrect","next":"Next Question →","seeResults":"See Results","complete":"Quiz Complete!","scoreText":"You got {correct} out of {total} correct","tryAgain":"Try Again","rightAnswer":"Right answer","notQuite":"Not quite"};
+let currentQ = 0, correctCount = 0, answered = false;
+
+function init() {
+  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === 0));
+  updateProgress();
+  document.querySelectorAll('.option').forEach(opt => opt.addEventListener('click', () => selectOption(opt)));
+  document.querySelectorAll('.next-btn').forEach(btn => btn.addEventListener('click', nextQuestion));
+}
+
+function selectOption(opt) {
+  if (answered) return;
+  answered = true;
+  const q = opt.closest('.question');
+  const options = q.querySelectorAll('.option');
+  const nextBtn = q.querySelector('.next-btn');
+  const isCorrect = opt.dataset.correct === 'true';
+  
+  // Mark all options as disabled
+  options.forEach(o => o.classList.add('disabled'));
+  
+  // Style selected option
+  opt.classList.add('selected', isCorrect ? 'correct' : 'incorrect');
+  
+  // Show correct answer if wrong
+  if (!isCorrect) {
+    const correctOpt = [...options].find(o => o.dataset.correct === 'true');
+    if (correctOpt) correctOpt.classList.add('show-correct');
+  }
+  
+  if (isCorrect) correctCount++;
+  
+  // Show feedback for ALL options that have rationale
+  options.forEach(o => {
+    const wrapper = o.closest('.option-wrapper');
+    const feedback = wrapper.querySelector('.option-feedback');
+    const rationale = o.dataset.rationale;
+    const isThisCorrect = o.dataset.correct === 'true';
+    
+    if (rationale && rationale.trim()) {
+      feedback.classList.remove('hidden');
+      feedback.classList.add(isThisCorrect ? 'correct-feedback' : 'incorrect-feedback');
+      
+      const statusEl = feedback.querySelector('.feedback-status');
+      statusEl.className = 'feedback-status ' + (isThisCorrect ? 'correct' : 'incorrect');
+      statusEl.innerHTML = isThisCorrect 
+        ? '✓ ' + tr.rightAnswer
+        : '✗ ' + tr.notQuite;
+    }
+  });
+  
+  nextBtn.classList.remove('hidden');
+  if (currentQ === quizData.length - 1) nextBtn.textContent = tr.seeResults;
+}
+
+function nextQuestion() {
+  answered = false;
+  currentQ++;
+  if (currentQ >= quizData.length) { showResults(); return; }
+  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === currentQ));
+  updateProgress();
+}
+
+function updateProgress() {
+  document.querySelector('.progress-fill').style.width = (currentQ / quizData.length * 100) + '%';
+}
+
+function showResults() {
+  document.querySelectorAll('.question').forEach(q => q.classList.remove('active'));
+  document.getElementById('results').classList.add('active');
+  const pct = Math.round((correctCount / quizData.length) * 100);
+  document.getElementById('score').textContent = pct + '%';
+  document.getElementById('score-text').textContent = tr.scoreText.replace('{correct}', correctCount).replace('{total}', quizData.length);
+  document.querySelector('.progress-fill').style.width = '100%';
+}
+
+function restart() {
+  currentQ = 0; correctCount = 0; answered = false;
+  document.getElementById('results').classList.remove('active');
+  document.querySelectorAll('.question').forEach((q, i) => {
+    q.classList.toggle('active', i === 0);
+    q.querySelectorAll('.option').forEach(o => o.classList.remove('selected', 'correct', 'incorrect', 'disabled', 'show-correct'));
+    q.querySelectorAll('.option-feedback').forEach(f => {
+      f.classList.add('hidden');
+      f.classList.remove('correct-feedback', 'incorrect-feedback');
+    });
+    const btn = q.querySelector('.next-btn');
+    btn.classList.add('hidden');
+    btn.textContent = tr.next;
+  });
+  updateProgress();
+}
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="es" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Turismo Cuestionario_2</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh; padding: 20px; color: #333;
+}
+.container { max-width: 700px; margin: 0 auto; }
+.header { text-align: center; color: #fff; padding: 30px 20px; }
+.header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+.header .meta { font-size: 14px; opacity: 0.9; }
+.progress-bar { background: rgba(255,255,255,0.3); border-radius: 10px; height: 8px; margin: 20px 0; overflow: hidden; }
+.progress-fill { background: #fff; height: 100%; width: 0%; transition: width 0.4s ease; border-radius: 10px; }
+.question { background: #fff; border-radius: 16px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
+.question.active { display: block; }
+.q-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; color: #888; }
+.q-number { font-weight: 600; color: #667eea; }
+.q-text { font-size: 18px; font-weight: 600; line-height: 1.5; margin-bottom: 25px; color: #222; }
+.options { display: flex; flex-direction: column; gap: 12px; }
+.option-wrapper { display: flex; flex-direction: column; }
+.option {
+  display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px;
+  border: 2px solid #e8e8e8; border-radius: 12px; background: #fafafa;
+  cursor: pointer; transition: all 0.2s; text-align: left; font-size: 15px; width: 100%;
+}
+[dir="rtl"] .option { text-align: right; flex-direction: row-reverse; }
+.option:hover:not(.disabled) { border-color: #667eea; background: #f5f3ff; }
+.option.selected { border-color: #667eea; background: #ede9fe; }
+.option.correct { border-color: #22c55e; background: #dcfce7; }
+.option.incorrect { border-color: #ef4444; background: #fee2e2; }
+.option.disabled { cursor: default; }
+.option.show-correct { border-color: #22c55e; background: #dcfce7; }
+.opt-label {
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50%; background: #e8e8e8;
+  font-weight: 700; font-size: 14px; flex-shrink: 0;
+}
+.option.selected .opt-label { background: #667eea; color: #fff; }
+.option.correct .opt-label { background: #22c55e; color: #fff; }
+.option.incorrect .opt-label { background: #ef4444; color: #fff; }
+.option.show-correct .opt-label { background: #22c55e; color: #fff; }
+.opt-text { padding-top: 5px; line-height: 1.5; }
+
+/* Individual option feedback */
+.option-feedback {
+  margin: 8px 0 4px 46px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+[dir="rtl"] .option-feedback { margin-left: 0; margin-right: 46px; }
+.option-feedback.correct-feedback {
+  background: #dcfce7;
+  border-left: 3px solid #22c55e;
+}
+.option-feedback.incorrect-feedback {
+  background: #fef3f2;
+  border-left: 3px solid #fca5a5;
+}
+[dir="rtl"] .option-feedback.correct-feedback,
+[dir="rtl"] .option-feedback.incorrect-feedback {
+  border-left: none;
+  border-right: 3px solid;
+}
+[dir="rtl"] .option-feedback.correct-feedback { border-right-color: #22c55e; }
+[dir="rtl"] .option-feedback.incorrect-feedback { border-right-color: #fca5a5; }
+.feedback-status {
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.feedback-status.correct { color: #166534; }
+.feedback-status.incorrect { color: #991b1b; }
+.feedback-rationale { color: #444; }
+
+/* Hint box */
+.hint-box {
+  margin: 12px 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+}
+.hint-toggle {
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #92400e;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hint-toggle:hover { background: #fef3c7; }
+.hint-content {
+  padding: 0 16px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s, padding 0.3s;
+  font-size: 14px;
+  color: #78350f;
+  line-height: 1.5;
+}
+.hint-box.show .hint-content {
+  padding: 0 16px 12px;
+  max-height: 200px;
+}
+
+.next-btn {
+  margin-top: 20px; width: 100%; padding: 14px;
+  background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border: none;
+  border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.next-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
+.hidden { display: none !important; }
+.results { background: #fff; border-radius: 16px; padding: 40px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
+.results.active { display: block; }
+.results h2 { font-size: 28px; margin-bottom: 10px; color: #333; }
+.results .score { font-size: 64px; font-weight: 700; color: #667eea; margin: 20px 0; }
+.results .score-text { font-size: 18px; color: #666; margin-bottom: 30px; }
+.restart-btn {
+  padding: 14px 40px; background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+}
+
+/* Math CSS */
+.math, .math-block { font-family: "Cambria Math", "Times New Roman", Times, serif; font-style: italic; }
+.math-block { display: block; text-align: center; margin: 10px 0; font-size: 110%; }
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 3px; font-size: 0.9em; }
+.frac-num { border-bottom: 1px solid currentColor; padding: 0 4px 2px; line-height: 1.2; }
+.frac-den { padding: 2px 4px 0; line-height: 1.2; }
+.sqrt { white-space: nowrap; }
+.sqrt-content { border-top: 1px solid currentColor; padding: 0 3px; margin-left: 2px; }
+sup, sub { font-size: 0.75em; }
+sup { vertical-align: super; }
+sub { vertical-align: sub; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Turismo Cuestionario_2</h1>
+    <div class="meta">12 preguntas</div>
+    <div class="progress-bar"><div class="progress-fill"></div></div>
+  </div>
+  <div id="quiz-container">
+        <div class="question" data-index="0">
+          <div class="q-header">
+            <span class="q-number">Pregunta 1</span>
+            <span class="q-of">/ 12</span>
+          </div>
+          <div class="q-text">¿Cuál es la diferencia fundamental entre una Ciudad Inteligente (Smart City) y un Destino Turístico Inteligente (DTI) según el video?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piense en quiénes son los beneficiarios finales de los servicios y la planificación en cada modelo.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="El DTI es un modelo altamente tecnológico que utiliza datos para la planificación, no solo para la promoción.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">La Smart City utiliza tecnología de punta y el DTI se basa únicamente en la promoción turística tradicional.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El DTI es un modelo altamente tecnológico que utiliza datos para la planificación, no solo para la promoción.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="El video aclara explícitamente que son conceptos distintos debido al público objetivo que cada uno prioriza.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">No existe diferencia alguna; ambos términos son sinónimos utilizados en diferentes regiones geográficas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El video aclara explícitamente que son conceptos distintos debido al público objetivo que cada uno prioriza.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="El DTI requiere una convivencia armónica donde los datos optimizan la experiencia del visitante sin perjudicar la calidad de vida del habitante local.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">La Smart City se enfoca casi exclusivamente en los residentes, mientras que el DTI busca un equilibrio entre residentes y turistas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El DTI requiere una convivencia armónica donde los datos optimizan la experiencia del visitante sin perjudicar la calidad de vida del habitante local.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Ambos conceptos integran la sostenibilidad, pero el DTI amplía su enfoque para incluir específicamente la gestión del flujo de visitantes.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">El DTI se centra solo en la rentabilidad económica, mientras que la Smart City prioriza la sostenibilidad ambiental.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Ambos conceptos integran la sostenibilidad, pero el DTI amplía su enfoque para incluir específicamente la gestión del flujo de visitantes.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="1">
+          <div class="q-header">
+            <span class="q-number">Pregunta 2</span>
+            <span class="q-of">/ 12</span>
+          </div>
+          <div class="q-text">Para obtener la certificación de Segitur como DTI, ¿qué porcentaje de los requisitos exigidos debe cumplir un destino?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Recuerde que se trata de una cifra alta que demuestra un compromiso serio con la excelencia en la gestión.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Aunque la sostenibilidad es clave, la certificación evalúa múltiples dimensiones y permite un margen (aunque pequeño) de mejora.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">El 100% de los indicadores de sostenibilidad ambiental.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque la sostenibilidad es clave, la certificación evalúa múltiples dimensiones y permite un margen (aunque pequeño) de mejora.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="La metodología de Segitur es rigurosa y exige un cumplimiento superior al 80% para otorgar el distintivo de destino certificado.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Más del 80% de los más de 200 requisitos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La metodología de Segitur es rigurosa y exige un cumplimiento superior al 80% para otorgar el distintivo de destino certificado.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="El cumplimiento por ejes no es suficiente; se requiere una evaluación detallada de una amplia lista de requisitos técnicos.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Al menos el 50% de los ejes estratégicos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El cumplimiento por ejes no es suficiente; se requiere una evaluación detallada de una amplia lista de requisitos técnicos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="La certificación no se mide por la cantidad de hardware instalado, sino por el cumplimiento de una metodología integral de gestión.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Más del 75% de los sensores instalados en la vía pública.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La certificación no se mide por la cantidad de hardware instalado, sino por el cumplimiento de una metodología integral de gestión.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="2">
+          <div class="q-header">
+            <span class="q-number">Pregunta 3</span>
+            <span class="q-of">/ 12</span>
+          </div>
+          <div class="q-text">En la analogía del coche utilizada en el video, ¿qué elemento representa la 'gobernanza'?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere qué parte del vehículo es responsable de decidir hacia dónde se dirige el viaje.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="El combustible podría asociarse a la inversión o los datos, pero no a la dirección estratégica que proporciona la gobernanza.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">El combustible que permite el funcionamiento.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El combustible podría asociarse a la inversión o los datos, pero no a la dirección estratégica que proporciona la gobernanza.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="El motor representa a la tecnología, que es la herramienta necesaria para que el destino avance.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">El motor que impulsa el movimiento.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El motor representa a la tecnología, que es la herramienta necesaria para que el destino avance.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="La gobernanza es el eje que guía y coordina todos los demás esfuerzos para evitar que el destino vaya a la deriva.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">El volante que da dirección al vehículo.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La gobernanza es el eje que guía y coordina todos los demás esfuerzos para evitar que el destino vaya a la deriva.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Esto podría relacionarse con la infraestructura física, pero la gobernanza se encarga del control y la toma de decisiones.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Los neumáticos que mantienen el contacto con el suelo.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esto podría relacionarse con la infraestructura física, pero la gobernanza se encarga del control y la toma de decisiones.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="3">
+          <div class="q-header">
+            <span class="q-number">Pregunta 4</span>
+            <span class="q-of">/ 12</span>
+          </div>
+          <div class="q-text">¿Cuál es la función principal de las normas UNE (como la del comité 178) en el ecosistema DTI?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Imagine el caos que supondría que cada base de datos hablara un idioma técnico diferente.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Las normas UNE son estándares técnicos de calidad y gestión, no códigos de sanciones penales.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Establecer las multas económicas para los destinos que no cumplen con los requisitos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Las normas UNE son estándares técnicos de calidad y gestión, no códigos de sanciones penales.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Las normas son un soporte técnico, pero la voluntad política y el plan de acción siguen siendo indispensables.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Sustituir la necesidad de contar con un plan de acción gubernamental.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Las normas son un soporte técnico, pero la voluntad política y el plan de acción siguen siendo indispensables.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="El objetivo es la armonización técnica y la eficiencia, no el proteccionismo comercial.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Limitar el uso de la tecnología extranjera para proteger la industria local.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El objetivo es la armonización técnica y la eficiencia, no el proteccionismo comercial.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="La estandarización permite la interoperabilidad de los datos entre el sector público y privado, evitando silos de información.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Actuar como un traductor universal para que diferentes sistemas y bases de datos se comuniquen entre sí.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La estandarización permite la interoperabilidad de los datos entre el sector público y privado, evitando silos de información.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="4">
+          <div class="q-header">
+            <span class="q-number">Pregunta 5</span>
+            <span class="q-of">/ 12</span>
+          </div>
+          <div class="q-text">De acuerdo con el video, ¿cuál es la ventaja de utilizar Realidad Aumentada (RA) en sitios arqueológicos?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piense en cómo se puede 'reconstruir' un edificio antiguo para el ojo del turista sin usar cemento ni ladrillos.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="La tecnología no elimina el mantenimiento físico del patrimonio, solo cambia la forma en que se consume la información.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Reduce los costos de mantenimiento al eliminar la necesidad de limpieza en el sitio.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La tecnología no elimina el mantenimiento físico del patrimonio, solo cambia la forma en que se consume la información.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="El enfoque mencionado es la interpretación histórica y la preservación, no la comercialización de activos digitales.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Permite que los turistas se lleven piezas virtuales como recuerdos digitales pagados.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El enfoque mencionado es la interpretación histórica y la preservación, no la comercialización de activos digitales.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="La RA mejora la experiencia presencial; la sustitución total sería más propia de la Realidad Virtual.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Sustituye por completo la necesidad de visitar el lugar de forma presencial.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La RA mejora la experiencia presencial; la sustitución total sería más propia de la Realidad Virtual.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="La RA superpone información digital al mundo físico, ofreciendo una experiencia inmersiva que respeta la integridad del patrimonio.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Permite visualizar el sitio tal como era originalmente sin necesidad de intervenir o dañar las piedras físicas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La RA superpone información digital al mundo físico, ofreciendo una experiencia inmersiva que respeta la integridad del patrimonio.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="5">
+          <div class="q-header">
+            <span class="q-number">Pregunta 6</span>
+            <span class="q-of">/ 12</span>
+          </div>
+          <div class="q-text">¿Cómo se define la 'capacidad de carga dinámica' frente al concepto tradicional de capacidad de carga?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere la diferencia entre un balde de agua con capacidad fija y un sistema que se ajusta a cada momento.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="La capacidad dinámica reconoce que la aptitud de un espacio para recibir gente cambia constantemente según el contexto ambiental y social.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Es un concepto vivo que varía según factores de corrección en tiempo real como el clima o el transporte.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La capacidad dinámica reconoce que la aptitud de un espacio para recibir gente cambia constantemente según el contexto ambiental y social.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Este es un término de ingeniería estructural, no de gestión de flujos turísticos inteligentes.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Es la cantidad máxima de peso que pueden soportar las estructuras físicas de un edificio.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este es un término de ingeniería estructural, no de gestión de flujos turísticos inteligentes.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Esa es la definición tradicional (estática), que no considera las variables cambiantes del tiempo real.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Es un valor fijo basado en el tamaño del terreno disponible.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esa es la definición tradicional (estática), que no considera las variables cambiantes del tiempo real.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="La capacidad dinámica se mide en el instante exacto para permitir una gestión proactiva.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Es una medida anual que se calcula al final de cada temporada alta.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La capacidad dinámica se mide en el instante exacto para permitir una gestión proactiva.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="6">
+          <div class="q-header">
+            <span class="q-number">Pregunta 7</span>
+            <span class="q-of">/ 12</span>
+          </div>
+          <div class="q-text">Utilizando la lógica del video, ¿cuál es la fórmula simplificada para calcular la capacidad en un momento exacto (<span class="math">C</span>)?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Se trata de una operación que aplica ajustes (factores) a una base espacial preexistente.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Esta es una tasa de función turística, no una medida de la capacidad de absorción física y social del espacio.">
+            <span class="opt-label">A</span>
+            <span class="opt-text"><span class="math">C = fractextNúmero de turistastextNúmero de residentes</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta es una tasa de función turística, no una medida de la capacidad de absorción física y social del espacio.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="La tecnología es el medio para obtener los datos, pero no define por sí misma la capacidad del territorio.">
+            <span class="opt-label">B</span>
+            <span class="opt-text"><span class="math">C = textInversión tecnológica + textNúmero de sensores</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La tecnología es el medio para obtener los datos, pero no define por sí misma la capacidad del territorio.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Aunque la contaminación es un factor, la fórmula integra múltiples dimensiones correctivas, no solo una resta de contaminantes.">
+            <span class="opt-label">C</span>
+            <span class="opt-text"><span class="math">C = textEspacio físico - textTasa de contaminación</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque la contaminación es un factor, la fórmula integra múltiples dimensiones correctivas, no solo una resta de contaminantes.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="La capacidad se obtiene ajustando el espacio disponible mediante multiplicadores que representan condiciones en tiempo real.">
+            <span class="opt-label">D</span>
+            <span class="opt-text"><span class="math">C = textEspacio físico × textFactores de corrección</span></span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La capacidad se obtiene ajustando el espacio disponible mediante multiplicadores que representan condiciones en tiempo real.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="7">
+          <div class="q-header">
+            <span class="q-number">Pregunta 8</span>
+            <span class="q-of">/ 12</span>
+          </div>
+          <div class="q-text">En el distrito de Takeshiba en Tokio, ¿qué beneficio concreto se obtuvo mediante el uso de simulaciones en su gemelo digital?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">El impacto mencionado está relacionado con la prevención de riesgos y la supervivencia ante catástrofes.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="La gestión inteligente optimiza el flujo, pero raramente elimina el tráfico en una metrópolis como Tokio.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Se logró eliminar por completo el tráfico vehicular en la zona.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La gestión inteligente optimiza el flujo, pero raramente elimina el tráfico en una metrópolis como Tokio.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="El gemelo digital permite modelar escenarios de riesgo para optimizar las rutas de salida y salvar vidas.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">La eficiencia en caso de evacuación por emergencia mejoró en un 70%.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El gemelo digital permite modelar escenarios de riesgo para optimizar las rutas de salida y salvar vidas.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Aunque es posible lograr eficiencia energética, el video destaca específicamente la mejora en la seguridad ante desastres.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Se redujo el consumo de energía de los hoteles en un 50%.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque es posible lograr eficiencia energética, el video destaca específicamente la mejora en la seguridad ante desastres.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Tokio usa robótica como apoyo, pero el objetivo sigue siendo la gestión de la población humana.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">El número de turistas robóticos superó al de los humanos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Tokio usa robótica como apoyo, pero el objetivo sigue siendo la gestión de la población humana.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="8">
+          <div class="q-header">
+            <span class="q-number">Pregunta 9</span>
+            <span class="q-of">/ 12</span>
+          </div>
+          <div class="q-text">¿Qué hito importante ocurrió en 2021 en relación con los DTI en América Latina?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piense en una localidad famosa por una bebida tradicional que lideró el cambio en la región.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="El proceso ha sido gradual, con diferentes ciudades sumándose en años distintos (2022, 2023).">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Todas las capitales latinoamericanas recibieron la certificación de Segitur simultáneamente.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El proceso ha sido gradual, con diferentes ciudades sumándose en años distintos (2022, 2023).</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="El video se enfoca en hitos de certificación y metodología DTI, no en tratados comerciales generales.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Se firmó el primer tratado de libre comercio turístico entre Colombia y España.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El video se enfoca en hitos de certificación y metodología DTI, no en tratados comerciales generales.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Tequila rompió el mito de que los DTI son exclusivos de grandes metrópolis tecnológicas, enfocándose en la gobernanza social.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Tequila (México) se convirtió en pionero al demostrar que un entorno rural puede ser inteligente.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Tequila rompió el mito de que los DTI son exclusivos de grandes metrópolis tecnológicas, enfocándose en la gobernanza social.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Por el contrario, el modelo DTI fomenta el uso de datos abiertos para mejorar la gestión.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Se prohibió el uso de datos abiertos para proteger la privacidad de los turistas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Por el contrario, el modelo DTI fomenta el uso de datos abiertos para mejorar la gestión.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="9">
+          <div class="q-header">
+            <span class="q-number">Pregunta 10</span>
+            <span class="q-of">/ 12</span>
+          </div>
+          <div class="q-text">¿Cuál es una de las principales razones por las que el sector privado en América Latina suele 'pisar el freno' ante el modelo DTI?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piense en las preocupaciones financieras habituales de cualquier inversor cuando la tecnología es costosa.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Aunque existen miedos tecnológicos, la principal barrera mencionada en el video es de carácter económico y estructural.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">El temor a que la inteligencia artificial reemplace a todos los guías turísticos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque existen miedos tecnológicos, la principal barrera mencionada en el video es de carácter económico y estructural.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="La inversión en tecnología DTI es considerable y sus beneficios económicos suelen verse de forma indirecta o a largo plazo.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Los altos costos iniciales de los equipos y un retorno de inversión incierto a corto plazo.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La inversión en tecnología DTI es considerable y sus beneficios económicos suelen verse de forma indirecta o a largo plazo.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="No existe una prohibición general, sino más bien una falta de incentivos o soporte técnico continuo.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Las leyes regionales que prohíben la instalación de sensores en hoteles privados.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">No existe una prohibición general, sino más bien una falta de incentivos o soporte técnico continuo.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Los turistas suelen demandar más conectividad; el problema es la viabilidad financiera para las empresas.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">La falta de interés de los turistas en utilizar herramientas digitales.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Los turistas suelen demandar más conectividad; el problema es la viabilidad financiera para las empresas.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="10">
+          <div class="q-header">
+            <span class="q-number">Pregunta 11</span>
+            <span class="q-of">/ 12</span>
+          </div>
+          <div class="q-text">¿Qué contradicción o 'ironía' se menciona respecto a la implementación de tecnología avanzada en algunos cascos coloniales latinoamericanos?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere la diferencia entre querer un 'cerebro digital' y no tener 'piernas' (infraestructura física) adecuadas.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="La accesibilidad física es un pilar básico que a menudo se descuida en favor de soluciones digitales más llamativas.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Se debate sobre inteligencia artificial mientras los lugares carecen de rampas básicas para sillas de ruedas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La accesibilidad física es un pilar básico que a menudo se descuida en favor de soluciones digitales más llamativas.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Esta es una falla técnica específica, pero el video resalta la desconexión entre la alta tecnología y las necesidades básicas de infraestructura.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Los sensores de última generación funcionan con energía solar en ciudades donde siempre está nublado.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta es una falla técnica específica, pero el video resalta la desconexión entre la alta tecnología y las necesidades básicas de infraestructura.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Aunque la brecha digital existe, el ejemplo clave del video es la falta de accesibilidad física universal.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Se instalan aplicaciones de traducción en lugares donde nadie tiene acceso a internet.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque la brecha digital existe, el ejemplo clave del video es la falta de accesibilidad física universal.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="El problema no es la falta de turistas, sino la mala gestión del entorno físico en el que estos se mueven.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Hay demasiada analítica predictiva pero no hay turistas a quienes predecirles el comportamiento.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El problema no es la falta de turistas, sino la mala gestión del entorno físico en el que estos se mueven.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="11">
+          <div class="q-header">
+            <span class="q-number">Pregunta 12</span>
+            <span class="q-of">/ 12</span>
+          </div>
+          <div class="q-text">Según la 'regla de oro' mencionada al final del video, ¿cuál es el verdadero propósito de la tecnología en un DTI?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Recuerde que el video enfatiza que la tecnología es un medio, no un fin.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="La tecnología apoya la toma de decisiones, pero la gobernanza humana sigue siendo el eje central.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Sustituir por completo la labor de los gestores públicos mediante algoritmos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La tecnología apoya la toma de decisiones, pero la gobernanza humana sigue siendo el eje central.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="La tecnología nunca debe ser el fin en sí mismo, sino el medio para mejorar la calidad de vida y la gestión del destino.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Ser una herramienta que haga viable la sostenibilidad y el bienestar del territorio y su gente.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La tecnología nunca debe ser el fin en sí mismo, sino el medio para mejorar la calidad de vida y la gestión del destino.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="El video critica precisamente la idea de perseguir la tecnología solo como un adorno o premio mediático.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Actuar como un trofeo para mejorar la imagen de marca frente a otros destinos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El video critica precisamente la idea de perseguir la tecnología solo como un adorno o premio mediático.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="El objetivo del DTI es el equilibrio y la sostenibilidad, no el crecimiento descontrolado.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Aumentar indefinidamente el número de visitantes para maximizar los ingresos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El objetivo del DTI es el equilibrio y la sostenibilidad, no el crecimiento descontrolado.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      </div>
+  <div class="results" id="results">
+    <h2>¡Cuestionario completado!</h2>
+    <div class="score" id="score">0%</div>
+    <div class="score-text" id="score-text"></div>
+    <button class="restart-btn" onclick="restart()">Intentar de nuevo</button>
+  </div>
+</div>
+<script>
+const quizData = [{"question":"¿Cuál es la diferencia fundamental entre una Ciudad Inteligente (Smart City) y un Destino Turístico Inteligente (DTI) según el video?","hint":"Piense en quiénes son los beneficiarios finales de los servicios y la planificación en cada modelo.","options":[{"label":"A","text":"La Smart City utiliza tecnología de punta y el DTI se basa únicamente en la promoción turística tradicional.","isCorrect":false,"rationale":"El DTI es un modelo altamente tecnológico que utiliza datos para la planificación, no solo para la promoción."},{"label":"B","text":"No existe diferencia alguna; ambos términos son sinónimos utilizados en diferentes regiones geográficas.","isCorrect":false,"rationale":"El video aclara explícitamente que son conceptos distintos debido al público objetivo que cada uno prioriza."},{"label":"C","text":"La Smart City se enfoca casi exclusivamente en los residentes, mientras que el DTI busca un equilibrio entre residentes y turistas.","isCorrect":true,"rationale":"El DTI requiere una convivencia armónica donde los datos optimizan la experiencia del visitante sin perjudicar la calidad de vida del habitante local."},{"label":"D","text":"El DTI se centra solo en la rentabilidad económica, mientras que la Smart City prioriza la sostenibilidad ambiental.","isCorrect":false,"rationale":"Ambos conceptos integran la sostenibilidad, pero el DTI amplía su enfoque para incluir específicamente la gestión del flujo de visitantes."}]},{"question":"Para obtener la certificación de Segitur como DTI, ¿qué porcentaje de los requisitos exigidos debe cumplir un destino?","hint":"Recuerde que se trata de una cifra alta que demuestra un compromiso serio con la excelencia en la gestión.","options":[{"label":"A","text":"El 100% de los indicadores de sostenibilidad ambiental.","isCorrect":false,"rationale":"Aunque la sostenibilidad es clave, la certificación evalúa múltiples dimensiones y permite un margen (aunque pequeño) de mejora."},{"label":"B","text":"Más del 80% de los más de 200 requisitos.","isCorrect":true,"rationale":"La metodología de Segitur es rigurosa y exige un cumplimiento superior al 80% para otorgar el distintivo de destino certificado."},{"label":"C","text":"Al menos el 50% de los ejes estratégicos.","isCorrect":false,"rationale":"El cumplimiento por ejes no es suficiente; se requiere una evaluación detallada de una amplia lista de requisitos técnicos."},{"label":"D","text":"Más del 75% de los sensores instalados en la vía pública.","isCorrect":false,"rationale":"La certificación no se mide por la cantidad de hardware instalado, sino por el cumplimiento de una metodología integral de gestión."}]},{"question":"En la analogía del coche utilizada en el video, ¿qué elemento representa la 'gobernanza'?","hint":"Considere qué parte del vehículo es responsable de decidir hacia dónde se dirige el viaje.","options":[{"label":"A","text":"El combustible que permite el funcionamiento.","isCorrect":false,"rationale":"El combustible podría asociarse a la inversión o los datos, pero no a la dirección estratégica que proporciona la gobernanza."},{"label":"B","text":"El motor que impulsa el movimiento.","isCorrect":false,"rationale":"El motor representa a la tecnología, que es la herramienta necesaria para que el destino avance."},{"label":"C","text":"El volante que da dirección al vehículo.","isCorrect":true,"rationale":"La gobernanza es el eje que guía y coordina todos los demás esfuerzos para evitar que el destino vaya a la deriva."},{"label":"D","text":"Los neumáticos que mantienen el contacto con el suelo.","isCorrect":false,"rationale":"Esto podría relacionarse con la infraestructura física, pero la gobernanza se encarga del control y la toma de decisiones."}]},{"question":"¿Cuál es la función principal de las normas UNE (como la del comité 178) en el ecosistema DTI?","hint":"Imagine el caos que supondría que cada base de datos hablara un idioma técnico diferente.","options":[{"label":"A","text":"Establecer las multas económicas para los destinos que no cumplen con los requisitos.","isCorrect":false,"rationale":"Las normas UNE son estándares técnicos de calidad y gestión, no códigos de sanciones penales."},{"label":"B","text":"Sustituir la necesidad de contar con un plan de acción gubernamental.","isCorrect":false,"rationale":"Las normas son un soporte técnico, pero la voluntad política y el plan de acción siguen siendo indispensables."},{"label":"C","text":"Limitar el uso de la tecnología extranjera para proteger la industria local.","isCorrect":false,"rationale":"El objetivo es la armonización técnica y la eficiencia, no el proteccionismo comercial."},{"label":"D","text":"Actuar como un traductor universal para que diferentes sistemas y bases de datos se comuniquen entre sí.","isCorrect":true,"rationale":"La estandarización permite la interoperabilidad de los datos entre el sector público y privado, evitando silos de información."}]},{"question":"De acuerdo con el video, ¿cuál es la ventaja de utilizar Realidad Aumentada (RA) en sitios arqueológicos?","hint":"Piense en cómo se puede 'reconstruir' un edificio antiguo para el ojo del turista sin usar cemento ni ladrillos.","options":[{"label":"A","text":"Reduce los costos de mantenimiento al eliminar la necesidad de limpieza en el sitio.","isCorrect":false,"rationale":"La tecnología no elimina el mantenimiento físico del patrimonio, solo cambia la forma en que se consume la información."},{"label":"B","text":"Permite que los turistas se lleven piezas virtuales como recuerdos digitales pagados.","isCorrect":false,"rationale":"El enfoque mencionado es la interpretación histórica y la preservación, no la comercialización de activos digitales."},{"label":"C","text":"Sustituye por completo la necesidad de visitar el lugar de forma presencial.","isCorrect":false,"rationale":"La RA mejora la experiencia presencial; la sustitución total sería más propia de la Realidad Virtual."},{"label":"D","text":"Permite visualizar el sitio tal como era originalmente sin necesidad de intervenir o dañar las piedras físicas.","isCorrect":true,"rationale":"La RA superpone información digital al mundo físico, ofreciendo una experiencia inmersiva que respeta la integridad del patrimonio."}]},{"question":"¿Cómo se define la 'capacidad de carga dinámica' frente al concepto tradicional de capacidad de carga?","hint":"Considere la diferencia entre un balde de agua con capacidad fija y un sistema que se ajusta a cada momento.","options":[{"label":"A","text":"Es un concepto vivo que varía según factores de corrección en tiempo real como el clima o el transporte.","isCorrect":true,"rationale":"La capacidad dinámica reconoce que la aptitud de un espacio para recibir gente cambia constantemente según el contexto ambiental y social."},{"label":"B","text":"Es la cantidad máxima de peso que pueden soportar las estructuras físicas de un edificio.","isCorrect":false,"rationale":"Este es un término de ingeniería estructural, no de gestión de flujos turísticos inteligentes."},{"label":"C","text":"Es un valor fijo basado en el tamaño del terreno disponible.","isCorrect":false,"rationale":"Esa es la definición tradicional (estática), que no considera las variables cambiantes del tiempo real."},{"label":"D","text":"Es una medida anual que se calcula al final de cada temporada alta.","isCorrect":false,"rationale":"La capacidad dinámica se mide en el instante exacto para permitir una gestión proactiva."}]},{"question":"Utilizando la lógica del video, ¿cuál es la fórmula simplificada para calcular la capacidad en un momento exacto ($C$)?","hint":"Se trata de una operación que aplica ajustes (factores) a una base espacial preexistente.","options":[{"label":"A","text":"$C = \\frac{\\text{Número de turistas}}{\\text{Número de residentes}}$","isCorrect":false,"rationale":"Esta es una tasa de función turística, no una medida de la capacidad de absorción física y social del espacio."},{"label":"B","text":"$C = \\text{Inversión tecnológica} + \\text{Número de sensores}$","isCorrect":false,"rationale":"La tecnología es el medio para obtener los datos, pero no define por sí misma la capacidad del territorio."},{"label":"C","text":"$C = \\text{Espacio físico} - \\text{Tasa de contaminación}$","isCorrect":false,"rationale":"Aunque la contaminación es un factor, la fórmula integra múltiples dimensiones correctivas, no solo una resta de contaminantes."},{"label":"D","text":"$C = \\text{Espacio físico} \\times \\text{Factores de corrección}$","isCorrect":true,"rationale":"La capacidad se obtiene ajustando el espacio disponible mediante multiplicadores que representan condiciones en tiempo real."}]},{"question":"En el distrito de Takeshiba en Tokio, ¿qué beneficio concreto se obtuvo mediante el uso de simulaciones en su gemelo digital?","hint":"El impacto mencionado está relacionado con la prevención de riesgos y la supervivencia ante catástrofes.","options":[{"label":"A","text":"Se logró eliminar por completo el tráfico vehicular en la zona.","isCorrect":false,"rationale":"La gestión inteligente optimiza el flujo, pero raramente elimina el tráfico en una metrópolis como Tokio."},{"label":"B","text":"La eficiencia en caso de evacuación por emergencia mejoró en un 70%.","isCorrect":true,"rationale":"El gemelo digital permite modelar escenarios de riesgo para optimizar las rutas de salida y salvar vidas."},{"label":"C","text":"Se redujo el consumo de energía de los hoteles en un 50%.","isCorrect":false,"rationale":"Aunque es posible lograr eficiencia energética, el video destaca específicamente la mejora en la seguridad ante desastres."},{"label":"D","text":"El número de turistas robóticos superó al de los humanos.","isCorrect":false,"rationale":"Tokio usa robótica como apoyo, pero el objetivo sigue siendo la gestión de la población humana."}]},{"question":"¿Qué hito importante ocurrió en 2021 en relación con los DTI en América Latina?","hint":"Piense en una localidad famosa por una bebida tradicional que lideró el cambio en la región.","options":[{"label":"A","text":"Todas las capitales latinoamericanas recibieron la certificación de Segitur simultáneamente.","isCorrect":false,"rationale":"El proceso ha sido gradual, con diferentes ciudades sumándose en años distintos (2022, 2023)."},{"label":"B","text":"Se firmó el primer tratado de libre comercio turístico entre Colombia y España.","isCorrect":false,"rationale":"El video se enfoca en hitos de certificación y metodología DTI, no en tratados comerciales generales."},{"label":"C","text":"Tequila (México) se convirtió en pionero al demostrar que un entorno rural puede ser inteligente.","isCorrect":true,"rationale":"Tequila rompió el mito de que los DTI son exclusivos de grandes metrópolis tecnológicas, enfocándose en la gobernanza social."},{"label":"D","text":"Se prohibió el uso de datos abiertos para proteger la privacidad de los turistas.","isCorrect":false,"rationale":"Por el contrario, el modelo DTI fomenta el uso de datos abiertos para mejorar la gestión."}]},{"question":"¿Cuál es una de las principales razones por las que el sector privado en América Latina suele 'pisar el freno' ante el modelo DTI?","hint":"Piense en las preocupaciones financieras habituales de cualquier inversor cuando la tecnología es costosa.","options":[{"label":"A","text":"El temor a que la inteligencia artificial reemplace a todos los guías turísticos.","isCorrect":false,"rationale":"Aunque existen miedos tecnológicos, la principal barrera mencionada en el video es de carácter económico y estructural."},{"label":"B","text":"Los altos costos iniciales de los equipos y un retorno de inversión incierto a corto plazo.","isCorrect":true,"rationale":"La inversión en tecnología DTI es considerable y sus beneficios económicos suelen verse de forma indirecta o a largo plazo."},{"label":"C","text":"Las leyes regionales que prohíben la instalación de sensores en hoteles privados.","isCorrect":false,"rationale":"No existe una prohibición general, sino más bien una falta de incentivos o soporte técnico continuo."},{"label":"D","text":"La falta de interés de los turistas en utilizar herramientas digitales.","isCorrect":false,"rationale":"Los turistas suelen demandar más conectividad; el problema es la viabilidad financiera para las empresas."}]},{"question":"¿Qué contradicción o 'ironía' se menciona respecto a la implementación de tecnología avanzada en algunos cascos coloniales latinoamericanos?","hint":"Considere la diferencia entre querer un 'cerebro digital' y no tener 'piernas' (infraestructura física) adecuadas.","options":[{"label":"A","text":"Se debate sobre inteligencia artificial mientras los lugares carecen de rampas básicas para sillas de ruedas.","isCorrect":true,"rationale":"La accesibilidad física es un pilar básico que a menudo se descuida en favor de soluciones digitales más llamativas."},{"label":"B","text":"Los sensores de última generación funcionan con energía solar en ciudades donde siempre está nublado.","isCorrect":false,"rationale":"Esta es una falla técnica específica, pero el video resalta la desconexión entre la alta tecnología y las necesidades básicas de infraestructura."},{"label":"C","text":"Se instalan aplicaciones de traducción en lugares donde nadie tiene acceso a internet.","isCorrect":false,"rationale":"Aunque la brecha digital existe, el ejemplo clave del video es la falta de accesibilidad física universal."},{"label":"D","text":"Hay demasiada analítica predictiva pero no hay turistas a quienes predecirles el comportamiento.","isCorrect":false,"rationale":"El problema no es la falta de turistas, sino la mala gestión del entorno físico en el que estos se mueven."}]},{"question":"Según la 'regla de oro' mencionada al final del video, ¿cuál es el verdadero propósito de la tecnología en un DTI?","hint":"Recuerde que el video enfatiza que la tecnología es un medio, no un fin.","options":[{"label":"A","text":"Sustituir por completo la labor de los gestores públicos mediante algoritmos.","isCorrect":false,"rationale":"La tecnología apoya la toma de decisiones, pero la gobernanza humana sigue siendo el eje central."},{"label":"B","text":"Ser una herramienta que haga viable la sostenibilidad y el bienestar del territorio y su gente.","isCorrect":true,"rationale":"La tecnología nunca debe ser el fin en sí mismo, sino el medio para mejorar la calidad de vida y la gestión del destino."},{"label":"C","text":"Actuar como un trofeo para mejorar la imagen de marca frente a otros destinos.","isCorrect":false,"rationale":"El video critica precisamente la idea de perseguir la tecnología solo como un adorno o premio mediático."},{"label":"D","text":"Aumentar indefinidamente el número de visitantes para maximizar los ingresos.","isCorrect":false,"rationale":"El objetivo del DTI es el equilibrio y la sostenibilidad, no el crecimiento descontrolado."}]}];
+const tr = {"correct":"¡Correcto!","incorrect":"Incorrecto","next":"Siguiente pregunta →","seeResults":"Ver resultados","complete":"¡Cuestionario completado!","scoreText":"Obtuviste {correct} de {total} correctas","tryAgain":"Intentar de nuevo","rightAnswer":"Respuesta correcta","notQuite":"No del todo"};
+let currentQ = 0, correctCount = 0, answered = false;
+
+function init() {
+  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === 0));
+  updateProgress();
+  document.querySelectorAll('.option').forEach(opt => opt.addEventListener('click', () => selectOption(opt)));
+  document.querySelectorAll('.next-btn').forEach(btn => btn.addEventListener('click', nextQuestion));
+}
+
+function selectOption(opt) {
+  if (answered) return;
+  answered = true;
+  const q = opt.closest('.question');
+  const options = q.querySelectorAll('.option');
+  const nextBtn = q.querySelector('.next-btn');
+  const isCorrect = opt.dataset.correct === 'true';
+  
+  // Mark all options as disabled
+  options.forEach(o => o.classList.add('disabled'));
+  
+  // Style selected option
+  opt.classList.add('selected', isCorrect ? 'correct' : 'incorrect');
+  
+  // Show correct answer if wrong
+  if (!isCorrect) {
+    const correctOpt = [...options].find(o => o.dataset.correct === 'true');
+    if (correctOpt) correctOpt.classList.add('show-correct');
+  }
+  
+  if (isCorrect) correctCount++;
+  
+  // Show feedback for ALL options that have rationale
+  options.forEach(o => {
+    const wrapper = o.closest('.option-wrapper');
+    const feedback = wrapper.querySelector('.option-feedback');
+    const rationale = o.dataset.rationale;
+    const isThisCorrect = o.dataset.correct === 'true';
+    
+    if (rationale && rationale.trim()) {
+      feedback.classList.remove('hidden');
+      feedback.classList.add(isThisCorrect ? 'correct-feedback' : 'incorrect-feedback');
+      
+      const statusEl = feedback.querySelector('.feedback-status');
+      statusEl.className = 'feedback-status ' + (isThisCorrect ? 'correct' : 'incorrect');
+      statusEl.innerHTML = isThisCorrect 
+        ? '✓ ' + tr.rightAnswer
+        : '✗ ' + tr.notQuite;
+    }
+  });
+  
+  nextBtn.classList.remove('hidden');
+  if (currentQ === quizData.length - 1) nextBtn.textContent = tr.seeResults;
+}
+
+function nextQuestion() {
+  answered = false;
+  currentQ++;
+  if (currentQ >= quizData.length) { showResults(); return; }
+  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === currentQ));
+  updateProgress();
+}
+
+function updateProgress() {
+  document.querySelector('.progress-fill').style.width = (currentQ / quizData.length * 100) + '%';
+}
+
+function showResults() {
+  document.querySelectorAll('.question').forEach(q => q.classList.remove('active'));
+  document.getElementById('results').classList.add('active');
+  const pct = Math.round((correctCount / quizData.length) * 100);
+  document.getElementById('score').textContent = pct + '%';
+  document.getElementById('score-text').textContent = tr.scoreText.replace('{correct}', correctCount).replace('{total}', quizData.length);
+  document.querySelector('.progress-fill').style.width = '100%';
+}
+
+function restart() {
+  currentQ = 0; correctCount = 0; answered = false;
+  document.getElementById('results').classList.remove('active');
+  document.querySelectorAll('.question').forEach((q, i) => {
+    q.classList.toggle('active', i === 0);
+    q.querySelectorAll('.option').forEach(o => o.classList.remove('selected', 'correct', 'incorrect', 'disabled', 'show-correct'));
+    q.querySelectorAll('.option-feedback').forEach(f => {
+      f.classList.add('hidden');
+      f.classList.remove('correct-feedback', 'incorrect-feedback');
+    });
+    const btn = q.querySelector('.next-btn');
+    btn.classList.add('hidden');
+    btn.textContent = tr.next;
+  });
+  updateProgress();
+}
+
+init();
+</script>
+</body>
+</html>

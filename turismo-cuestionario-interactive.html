@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="es" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Turismo Cuestionario</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh; padding: 20px; color: #333;
+}
+.container { max-width: 700px; margin: 0 auto; }
+.header { text-align: center; color: #fff; padding: 30px 20px; }
+.header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; text-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+.header .meta { font-size: 14px; opacity: 0.9; }
+.progress-bar { background: rgba(255,255,255,0.3); border-radius: 10px; height: 8px; margin: 20px 0; overflow: hidden; }
+.progress-fill { background: #fff; height: 100%; width: 0%; transition: width 0.4s ease; border-radius: 10px; }
+.question { background: #fff; border-radius: 16px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
+.question.active { display: block; }
+.q-header { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; color: #888; }
+.q-number { font-weight: 600; color: #667eea; }
+.q-text { font-size: 18px; font-weight: 600; line-height: 1.5; margin-bottom: 25px; color: #222; }
+.options { display: flex; flex-direction: column; gap: 12px; }
+.option-wrapper { display: flex; flex-direction: column; }
+.option {
+  display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px;
+  border: 2px solid #e8e8e8; border-radius: 12px; background: #fafafa;
+  cursor: pointer; transition: all 0.2s; text-align: left; font-size: 15px; width: 100%;
+}
+[dir="rtl"] .option { text-align: right; flex-direction: row-reverse; }
+.option:hover:not(.disabled) { border-color: #667eea; background: #f5f3ff; }
+.option.selected { border-color: #667eea; background: #ede9fe; }
+.option.correct { border-color: #22c55e; background: #dcfce7; }
+.option.incorrect { border-color: #ef4444; background: #fee2e2; }
+.option.disabled { cursor: default; }
+.option.show-correct { border-color: #22c55e; background: #dcfce7; }
+.opt-label {
+  display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50%; background: #e8e8e8;
+  font-weight: 700; font-size: 14px; flex-shrink: 0;
+}
+.option.selected .opt-label { background: #667eea; color: #fff; }
+.option.correct .opt-label { background: #22c55e; color: #fff; }
+.option.incorrect .opt-label { background: #ef4444; color: #fff; }
+.option.show-correct .opt-label { background: #22c55e; color: #fff; }
+.opt-text { padding-top: 5px; line-height: 1.5; }
+
+/* Individual option feedback */
+.option-feedback {
+  margin: 8px 0 4px 46px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+[dir="rtl"] .option-feedback { margin-left: 0; margin-right: 46px; }
+.option-feedback.correct-feedback {
+  background: #dcfce7;
+  border-left: 3px solid #22c55e;
+}
+.option-feedback.incorrect-feedback {
+  background: #fef3f2;
+  border-left: 3px solid #fca5a5;
+}
+[dir="rtl"] .option-feedback.correct-feedback,
+[dir="rtl"] .option-feedback.incorrect-feedback {
+  border-left: none;
+  border-right: 3px solid;
+}
+[dir="rtl"] .option-feedback.correct-feedback { border-right-color: #22c55e; }
+[dir="rtl"] .option-feedback.incorrect-feedback { border-right-color: #fca5a5; }
+.feedback-status {
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.feedback-status.correct { color: #166534; }
+.feedback-status.incorrect { color: #991b1b; }
+.feedback-rationale { color: #444; }
+
+/* Hint box */
+.hint-box {
+  margin: 12px 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+}
+.hint-toggle {
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #92400e;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.hint-toggle:hover { background: #fef3c7; }
+.hint-content {
+  padding: 0 16px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s, padding 0.3s;
+  font-size: 14px;
+  color: #78350f;
+  line-height: 1.5;
+}
+.hint-box.show .hint-content {
+  padding: 0 16px 12px;
+  max-height: 200px;
+}
+
+.next-btn {
+  margin-top: 20px; width: 100%; padding: 14px;
+  background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border: none;
+  border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.next-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
+.hidden { display: none !important; }
+.results { background: #fff; border-radius: 16px; padding: 40px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.15); display: none; }
+.results.active { display: block; }
+.results h2 { font-size: 28px; margin-bottom: 10px; color: #333; }
+.results .score { font-size: 64px; font-weight: 700; color: #667eea; margin: 20px 0; }
+.results .score-text { font-size: 18px; color: #666; margin-bottom: 30px; }
+.restart-btn {
+  padding: 14px 40px; background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;
+}
+
+/* Math CSS */
+.math, .math-block { font-family: "Cambria Math", "Times New Roman", Times, serif; font-style: italic; }
+.math-block { display: block; text-align: center; margin: 10px 0; font-size: 110%; }
+.frac { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; margin: 0 3px; font-size: 0.9em; }
+.frac-num { border-bottom: 1px solid currentColor; padding: 0 4px 2px; line-height: 1.2; }
+.frac-den { padding: 2px 4px 0; line-height: 1.2; }
+.sqrt { white-space: nowrap; }
+.sqrt-content { border-top: 1px solid currentColor; padding: 0 3px; margin-left: 2px; }
+sup, sub { font-size: 0.75em; }
+sup { vertical-align: super; }
+sub { vertical-align: sub; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Turismo Cuestionario</h1>
+    <div class="meta">15 preguntas</div>
+    <div class="progress-bar"><div class="progress-fill"></div></div>
+  </div>
+  <div id="quiz-container">
+        <div class="question" data-index="0">
+          <div class="q-header">
+            <span class="q-number">Pregunta 1</span>
+            <span class="q-of">/ 15</span>
+          </div>
+          <div class="q-text">¿Cuál es la diferencia fundamental entre el enfoque de una Ciudad Inteligente y un Destino Turístico Inteligente (DTI) según el marco conceptual?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piense en quiénes son los beneficiarios finales de las intervenciones en cada modelo.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Aunque el sector privado es parte de la cadena de valor, el DTI es un modelo multidimensional que abarca gobernanza, sostenibilidad y accesibilidad en todo el territorio.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">El DTI se enfoca exclusivamente en la digitalización de hoteles, mientras que la Ciudad Inteligente se ocupa del transporte público general.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque el sector privado es parte de la cadena de valor, el DTI es un modelo multidimensional que abarca gobernanza, sostenibilidad y accesibilidad en todo el territorio.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="El modelo DTI implica una delimitación geográfica y operativa distinta, centrada en la cadena de valor turística y el equilibrio entre turistas y residentes.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">No existen diferencias operativas, ya que un DTI es simplemente una marca comercial para una Ciudad Inteligente costera.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El modelo DTI implica una delimitación geográfica y operativa distinta, centrada en la cadena de valor turística y el equilibrio entre turistas y residentes.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Ambos modelos comparten infraestructuras tecnológicas como el IoT, pero el DTI las aplica específicamente para gestionar la experiencia turística y el impacto territorial.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">La Ciudad Inteligente utiliza sensores de Internet de las Cosas (IoT), pero el DTI se basa únicamente en el uso de redes sociales para la promoción.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Ambos modelos comparten infraestructuras tecnológicas como el IoT, pero el DTI las aplica específicamente para gestionar la experiencia turística y el impacto territorial.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="El modelo DTI adapta la gestión urbana para integrar las necesidades específicas del ecosistema turístico y sus flujos dinámicos, a diferencia del enfoque meramente residencial de la ciudad inteligente.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">La Ciudad Inteligente prioriza la calidad de vida de los ciudadanos permanentes, mientras que el DTI equilibra la experiencia del visitante con la habitabilidad de la comunidad receptora.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El modelo DTI adapta la gestión urbana para integrar las necesidades específicas del ecosistema turístico y sus flujos dinámicos, a diferencia del enfoque meramente residencial de la ciudad inteligente.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="1">
+          <div class="q-header">
+            <span class="q-number">Pregunta 2</span>
+            <span class="q-of">/ 15</span>
+          </div>
+          <div class="q-text">De acuerdo con la metodología de SEGITTUR, ¿qué requisito debe cumplir un destino para obtener el sello oficial de 'Destino Turístico Inteligente'?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere el umbral porcentual establecido para pasar de ser un destino 'adherido' a uno 'certificado'.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="El umbral del $80\%$ determina la distinción oficial como destino consolidado, mientras que niveles inferiores permiten solo la clasificación como 'adherido'.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Alcanzar un grado de cumplimiento igual o superior al <span class="math">80%</span> en los indicadores de la auditoría.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El umbral del <span class="math">80%</span> determina la distinción oficial como destino consolidado, mientras que niveles inferiores permiten solo la clasificación como 'adherido'.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="La metodología evalúa el cumplimiento de requisitos en cinco ejes estratégicos, no el volumen bruto de la inversión económica.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Contar con un presupuesto de inversión tecnológica superior a los diez millones de euros anuales.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La metodología evalúa el cumplimiento de requisitos en cinco ejes estratégicos, no el volumen bruto de la inversión económica.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Si bien la tecnología es un eje, la certificación depende de un conjunto integral de más de 200 requisitos que abarcan gobernanza, accesibilidad y sostenibilidad.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Haber digitalizado al menos el <span class="math">50%</span> de las empresas de transporte local.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Si bien la tecnología es un eje, la certificación depende de un conjunto integral de más de 200 requisitos que abarcan gobernanza, accesibilidad y sostenibilidad.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="El Gemelo Digital es una herramienta avanzada opcional, no un requisito porcentual para la certificación inicial de SEGITTUR.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Implementar un Gemelo Digital en menos de un año tras la adhesión a la red.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El Gemelo Digital es una herramienta avanzada opcional, no un requisito porcentual para la certificación inicial de SEGITTUR.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="2">
+          <div class="q-header">
+            <span class="q-number">Pregunta 3</span>
+            <span class="q-of">/ 15</span>
+          </div>
+          <div class="q-text">¿Qué función cumple la norma UNE 178503 dentro del ecosistema de normalización de los DTI?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Relacione el código de la norma con la necesidad de que diferentes máquinas 'hablen' el mismo idioma de datos.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="La integración de establecimientos privados como los hoteles está normada por la UNE 178504.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Regular la conexión de los hoteles inteligentes con las plataformas públicas de gestión de datos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La integración de establecimientos privados como los hoteles está normada por la UNE 178504.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Dicha función corresponde específicamente a la norma UNE 178507.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Gestionar el despliegue de infraestructura WiFi en entornos litorales.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Dicha función corresponde específicamente a la norma UNE 178507.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Esta norma define un lenguaje de datos unificado que permite que diferentes plataformas y proveedores compartan información de forma coherente.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Establecer una semántica y ontología de datos común para permitir la interoperabilidad de los sistemas de información.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta norma define un lenguaje de datos unificado que permite que diferentes plataformas y proveedores compartan información de forma coherente.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="La accesibilidad se gestiona de forma transversal en los ejes, pero la norma 178503 se centra específicamente en el componente lógico de los datos.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Definir los criterios de accesibilidad física para las playas y parques naturales.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La accesibilidad se gestiona de forma transversal en los ejes, pero la norma 178503 se centra específicamente en el componente lógico de los datos.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="3">
+          <div class="q-header">
+            <span class="q-number">Pregunta 4</span>
+            <span class="q-of">/ 15</span>
+          </div>
+          <div class="q-text">En la fórmula de la Capacidad de Carga Dinámica (<span class="math">CCD = CCF · ∏ FC<sub>i</sub></span>), ¿qué representa el factor de corrección <span class="math">FC<sub>s</sub></span>?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere variables relacionadas con el distanciamiento físico y la gestión de riesgos ante catástrofes naturales.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Las condiciones ambientales sensoriales se agrupan bajo el factor $FC_a$ (aire/ambiente).">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Factor de calidad sensorial relacionado con los niveles de ruido y temperatura.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Las condiciones ambientales sensoriales se agrupan bajo el factor <span class="math">FC<sub>a</sub></span> (aire/ambiente).</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Aunque es un concepto de sostenibilidad, la fórmula analizada en el material asigna $FC_s$ específicamente a la seguridad y emergencias.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Factor de sostenibilidad ambiental relacionado con la gestión de residuos sólidos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque es un concepto de sostenibilidad, la fórmula analizada en el material asigna <span class="math">FC<sub>s</sub></span> específicamente a la seguridad y emergencias.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="El subíndice 's' se refiere a la seguridad física y sanitaria, adaptando la capacidad de carga a riesgos o normativas de distanciamiento.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Factor de seguridad y salud, que incluye aforos en recintos cerrados y condiciones de evacuación.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El subíndice 's' se refiere a la seguridad física y sanitaria, adaptando la capacidad de carga a riesgos o normativas de distanciamiento.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="La movilidad y congestión de transporte se asocia generalmente al factor $FC_m$.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Factor de saturación del transporte público y plazas de estacionamiento.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La movilidad y congestión de transporte se asocia generalmente al factor <span class="math">FC<sub>m</sub></span>.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="4">
+          <div class="q-header">
+            <span class="q-number">Pregunta 5</span>
+            <span class="q-of">/ 15</span>
+          </div>
+          <div class="q-text">De acuerdo con el balance de flujos para la ocupación peatonal, si <span class="math">F<sub>in</sub> &gt; F<sub>out</sub></span> en un atractivo turístico, ¿qué ocurre con el volumen de visitantes <span class="math">N<sub>t</sub></span>?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piense en el resultado de llenar un recipiente donde entra más agua de la que sale.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="Si la tasa de entrada supera a la de salida, la densidad acumulada crece, lo que requiere intervenciones de dispersión de flujos.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">El volumen de visitantes <span class="math">N<sub>t</sub></span> aumenta progresivamente, incrementando el riesgo de alcanzar la saturación crítica.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Si la tasa de entrada supera a la de salida, la densidad acumulada crece, lo que requiere intervenciones de dispersión de flujos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="La IA puede predecir o sugerir cambios, pero el balance matemático de flujos simplemente describe la acumulación física de personas.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">La tasa de evacuación se reduce automáticamente por efecto del algoritmo de inteligencia artificial.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La IA puede predecir o sugerir cambios, pero el balance matemático de flujos simplemente describe la acumulación física de personas.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="La insostenibilidad ocurre cuando se superan los límites de carga, no simplemente porque el flujo de entrada sea positivo.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">El atractivo se clasifica inmediatamente como 'insostenible' sin importar el valor de <span class="math">N<sub>t</sub></span>.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La insostenibilidad ocurre cuando se superan los límites de carga, no simplemente porque el flujo de entrada sea positivo.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="La capacidad física es un límite máximo, pero el volumen real fluctúa dinámicamente según la diferencia entre entradas y salidas.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">El volumen de visitantes permanece constante debido a la capacidad de carga física teórica.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La capacidad física es un límite máximo, pero el volumen real fluctúa dinámicamente según la diferencia entre entradas y salidas.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="5">
+          <div class="q-header">
+            <span class="q-number">Pregunta 6</span>
+            <span class="q-of">/ 15</span>
+          </div>
+          <div class="q-text">¿Cuál es un beneficio directo del uso de Realidad Aumentada (RA) en la gestión de recursos patrimoniales vulnerables?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere cómo se puede mostrar algo que ya no existe físicamente sin tocar las ruinas actuales.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="La RA ofrece una solución didáctica que evita intervenciones físicas agresivas en yacimientos arqueológicos, preservando el patrimonio.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Permite realizar reconstrucciones virtuales de monumentos degradados sin alterar físicamente el soporte original.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La RA ofrece una solución didáctica que evita intervenciones físicas agresivas en yacimientos arqueológicos, preservando el patrimonio.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="La RA se aplica a la capa de experiencia del usuario y musealización, no al mantenimiento de hardware de red básico.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Reduce los costos de mantenimiento de las infraestructuras de telecomunicaciones subacuáticas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La RA se aplica a la capa de experiencia del usuario y musealización, no al mantenimiento de hardware de red básico.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="La RA puede incentivar el desplazamiento hacia zonas comerciales mediante gamificación, pero no garantiza transacciones económicas directas.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Garantiza que el <span class="math">100%</span> de los visitantes realicen compras en los comercios locales.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La RA puede incentivar el desplazamiento hacia zonas comerciales mediante gamificación, pero no garantiza transacciones económicas directas.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Aunque asiste en la comunicación, el material destaca la RA como herramienta de visualización e interacción espacial, no de reemplazo laboral.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Elimina la necesidad de guías turísticos humanos al automatizar las traducciones.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque asiste en la comunicación, el material destaca la RA como herramienta de visualización e interacción espacial, no de reemplazo laboral.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="6">
+          <div class="q-header">
+            <span class="q-number">Pregunta 7</span>
+            <span class="q-of">/ 15</span>
+          </div>
+          <div class="q-text">En el caso de éxito de Barcelona, ¿cuál es el pilar técnico que sustenta su plataforma Smart City para fomentar la interoperabilidad?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piense en el modelo de licenciamiento de software que permite compartir el conocimiento sin restricciones comerciales.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="La adopción de software libre permite una mayor transparencia, reducción de costos y facilidad para integrar datos de diferentes departamentos municipales.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">El uso de software de código abierto (open source) para evitar licencias propietarias.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La adopción de software libre permite una mayor transparencia, reducción de costos y facilidad para integrar datos de diferentes departamentos municipales.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Barcelona utiliza la tecnología para gestionar y dispersar flujos, no para cerrar distritos de forma analógica permanente.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">La prohibición total del acceso de turistas a los barrios tradicionales mediante barreras físicas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Barcelona utiliza la tecnología para gestionar y dispersar flujos, no para cerrar distritos de forma analógica permanente.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="El modelo de Barcelona busca la soberanía tecnológica y el acceso abierto a los datos, evitando la dependencia de un solo proveedor privado.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">La centralización de todos los datos en una única empresa tecnológica privada extranjera.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El modelo de Barcelona busca la soberanía tecnológica y el acceso abierto a los datos, evitando la dependencia de un solo proveedor privado.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Aunque Tokio apuesta por la robótica, Barcelona se enfoca en la sensorización y el análisis de datos abiertos para la convivencia social.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">La implementación de una red de robots de seguridad en lugar de sensores WiFi.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque Tokio apuesta por la robótica, Barcelona se enfoca en la sensorización y el análisis de datos abiertos para la convivencia social.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="7">
+          <div class="q-header">
+            <span class="q-number">Pregunta 8</span>
+            <span class="q-of">/ 15</span>
+          </div>
+          <div class="q-text">¿Qué herramienta utiliza Singapur para actuar como canalizador unificado de contenidos y servicios turísticos hacia el sector privado?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Busque el repositorio que permite la conexión entre la administración pública y los desarrolladores privados mediante interfaces de programación.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="El TIH centraliza la oferta y los datos, permitiendo que las empresas desarrollen sus propias soluciones tecnológicas consumiendo información oficial.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Tourism Information and Services Hub (TIH), gestionado mediante APIs abiertas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El TIH centraliza la oferta y los datos, permitiendo que las empresas desarrollen sus propias soluciones tecnológicas consumiendo información oficial.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Amaia es un ejemplo de plataforma IoT transversal mencionada en el texto, pero no es el hub de servicios turísticos de Singapur.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">La plataforma Amaia para la gestión del alumbrado público inteligente.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Amaia es un ejemplo de plataforma IoT transversal mencionada en el texto, pero no es el hub de servicios turísticos de Singapur.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Este portal es la pieza central de la estrategia de gestión de datos de Barcelona.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">El portal Open Data BCN para la planificación de festivales metropolitanos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este portal es la pieza central de la estrategia de gestión de datos de Barcelona.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Este proyecto pertenece a la estrategia de Japón, no a la de Singapur.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Tokyo Digital Twin Project, integrado con el sistema nacional PLATEAU.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Este proyecto pertenece a la estrategia de Japón, no a la de Singapur.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="8">
+          <div class="q-header">
+            <span class="q-number">Pregunta 9</span>
+            <span class="q-of">/ 15</span>
+          </div>
+          <div class="q-text">En la estrategia 'Smart Tokyo', ¿cuál es el objetivo principal de los ensayos operativos realizados en el distrito de Takeshiba?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere la propensión de la geografía japonesa a sufrir catástrofes y cómo la tecnología puede salvar vidas.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="Aunque importante, el enfoque de Takeshiba es la coordinación de emergencias y la navegación turística en un entorno urbano denso.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Monitorear exclusivamente la calidad del agua en las playas para el turismo náutico.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque importante, el enfoque de Takeshiba es la coordinación de emergencias y la navegación turística en un entorno urbano denso.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="La resiliencia urbana es clave en Tokio, utilizando gemelos digitales para optimizar la seguridad de ciudadanos y turistas ante sismos o inundaciones.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Reducir los tiempos de respuesta y mejorar la eficiencia de la evacuación ante desastres naturales.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La resiliencia urbana es clave en Tokio, utilizando gemelos digitales para optimizar la seguridad de ciudadanos y turistas ante sismos o inundaciones.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="El uso de QR para artesanías se menciona como un ejemplo de intervención en Sarchí, Costa Rica, no en Takeshiba.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Promover la venta de artesanías locales mediante el uso de códigos QR en las calles.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El uso de QR para artesanías se menciona como un ejemplo de intervención en Sarchí, Costa Rica, no en Takeshiba.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Tokio es una megaciudad que busca optimizar el transporte multimodal, no eliminarlo por actividades rurales.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Eliminar por completo el uso de transporte público para priorizar el senderismo fluvial.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Tokio es una megaciudad que busca optimizar el transporte multimodal, no eliminarlo por actividades rurales.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="9">
+          <div class="q-header">
+            <span class="q-number">Pregunta 10</span>
+            <span class="q-of">/ 15</span>
+          </div>
+          <div class="q-text">¿Cuál fue el primer destino de América Latina en recibir la certificación oficial como DTI por parte de SEGITTUR?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Este destino mexicano es famoso por su bebida homónima y su paisaje agavero.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="Tequila obtuvo la certificación en 2021, destacando por su modelo de inteligencia no tecnológica y cooperación público-privada.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Tequila (México).</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Tequila obtuvo la certificación en 2021, destacando por su modelo de inteligencia no tecnológica y cooperación público-privada.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Montevideo se certificó en 2023, aprovechando su infraestructura de telecomunicaciones preexistente.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Montevideo (Uruguay).</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Montevideo se certificó en 2023, aprovechando su infraestructura de telecomunicaciones preexistente.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Medellín obtuvo la certificación en 2022, después de un proceso de mejora en sus indicadores de madurez desde 2020.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Medellín (Colombia).</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Medellín obtuvo la certificación en 2022, después de un proceso de mejora en sus indicadores de madurez desde 2020.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="Al igual que Montevideo, Asunción recibió su distinción en 2023 centrada en la recuperación de su centro histórico.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Asunción (Paraguay).</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Al igual que Montevideo, Asunción recibió su distinción en 2023 centrada en la recuperación de su centro histórico.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="10">
+          <div class="q-header">
+            <span class="q-number">Pregunta 11</span>
+            <span class="q-of">/ 15</span>
+          </div>
+          <div class="q-text">¿Qué eje se identifica como el más rezagado en los destinos turísticos de América Latina según el análisis de barreras estructurales?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piense en las dificultades físicas de un turista en silla de ruedas en una ciudad colonial antigua.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="La falta de infraestructuras básicas para personas con discapacidad y la alta inversión requerida para adaptar cascos históricos lo sitúan como el eje crítico.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Accesibilidad.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La falta de infraestructuras básicas para personas con discapacidad y la alta inversión requerida para adaptar cascos históricos lo sitúan como el eje crítico.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="La región muestra dinamismo en proyectos creativos y laboratorios de innovación abierta, a pesar de las limitaciones presupuestarias.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Innovación.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La región muestra dinamismo en proyectos creativos y laboratorios de innovación abierta, a pesar de las limitaciones presupuestarias.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Aunque hay brechas, la tecnología se percibe como una oportunidad de inversión, mientras que la accesibilidad física presenta mayores deudas históricas.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Tecnología.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Aunque hay brechas, la tecnología se percibe como una oportunidad de inversión, mientras que la accesibilidad física presenta mayores deudas históricas.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="La gobernanza es el motor de los DTI en la región, aunque se enfrenta a desafíos de desalineación de políticas públicas.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Gobernanza.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La gobernanza es el motor de los DTI en la región, aunque se enfrenta a desafíos de desalineación de políticas públicas.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="11">
+          <div class="q-header">
+            <span class="q-number">Pregunta 12</span>
+            <span class="q-of">/ 15</span>
+          </div>
+          <div class="q-text">En el contexto de Big Data, ¿qué permite realizar la técnica de 'Reconocimiento de Entidades Nombradas' (NER) aplicada por herramientas como Cicerone?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Se relaciona con el procesamiento de lenguaje natural y la identificación de palabras clave en búsquedas.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="true" data-rationale="El NER identifica nombres de lugares, marcas o conceptos en lenguaje natural, transformando textos no estructurados en conocimiento estratégico.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Rastrear temas recurrentes y lugares de interés más citados en las consultas de los turistas para anticipar demandas.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El NER identifica nombres de lugares, marcas o conceptos en lenguaje natural, transformando textos no estructurados en conocimiento estratégico.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Esto es una función de los sensores de presencia en redes IoT, no de análisis semántico de datos masivos.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Aumentar la intensidad del alumbrado público cuando detecta la presencia de un ciudadano local.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esto es una función de los sensores de presencia en redes IoT, no de análisis semántico de datos masivos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Dicha función requeriría algoritmos de tasación dinámica y medición de emisiones, no simplemente reconocimiento de entidades lingüísticas.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Calcular automáticamente el precio del transporte público en función de la huella de carbono del viajero.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Dicha función requeriría algoritmos de tasación dinámica y medición de emisiones, no simplemente reconocimiento de entidades lingüísticas.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="El Big Data se usa para conocer el comportamiento, no para establecer prohibiciones físicas de forma automatizada por reconocimiento de texto.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Bloquear el acceso de turistas internacionales a zonas de alta sensibilidad ambiental.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El Big Data se usa para conocer el comportamiento, no para establecer prohibiciones físicas de forma automatizada por reconocimiento de texto.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="12">
+          <div class="q-header">
+            <span class="q-number">Pregunta 13</span>
+            <span class="q-of">/ 15</span>
+          </div>
+          <div class="q-text">¿Qué aspecto aborda la norma UNE 178510 dentro de la cadena de valor turística?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere la norma que se aplica directamente a los prestadores de servicios privados.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="La optimización en buscadores está regulada específicamente por la norma UNE 178506.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">La metodología para optimizar el posicionamiento SEO de las webs de destino.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La optimización en buscadores está regulada específicamente por la norma UNE 178506.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Los criterios para apps móviles se detallan en la norma UNE 178508.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">El marco de trabajo para la creación de aplicaciones móviles accesibles para el turista.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Los criterios para apps móviles se detallan en la norma UNE 178508.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="Dicha regulación de datos corresponde a la norma UNE 178509.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">El modelo de recogida ética y procesamiento de formatos de datos turísticos.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Dicha regulación de datos corresponde a la norma UNE 178509.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="true" data-rationale="Esta norma extiende el modelo de inteligencia a las unidades productivas privadas (hoteles, agencias, restaurantes) que componen el destino.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Los requisitos para la transformación digital de la Empresa Turística Inteligente (ETI).</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Esta norma extiende el modelo de inteligencia a las unidades productivas privadas (hoteles, agencias, restaurantes) que componen el destino.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="13">
+          <div class="q-header">
+            <span class="q-number">Pregunta 14</span>
+            <span class="q-of">/ 15</span>
+          </div>
+          <div class="q-text">De acuerdo al estudio sobre DTI en Latinoamérica, ¿cuál es una de las principales barreras que frena la inversión del capital privado?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Piense en la duda financiera de un empresario antes de comprar equipamiento tecnológico costoso.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="El problema no es la prohibición, sino la desarticulación entre los portales de datos abiertos y las necesidades reales del sector turístico.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">La prohibición gubernamental de usar datos abiertos en aplicaciones móviles.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El problema no es la prohibición, sino la desarticulación entre los portales de datos abiertos y las necesidades reales del sector turístico.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="false" data-rationale="Al contrario, el material menciona un déficit de competencias digitales y talento humano calificado como una barrera estructural.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">El exceso de personal técnico calificado que encarece los salarios en el sector.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Al contrario, el material menciona un déficit de competencias digitales y talento humano calificado como una barrera estructural.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="true" data-rationale="Las empresas dudan en invertir debido a la falta de modelos de negocio claros que demuestren cómo la tecnología generará beneficios económicos directos.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">La incertidumbre severa sobre el Retorno de la Inversión (ROI).</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">Las empresas dudan en invertir debido a la falta de modelos de negocio claros que demuestren cómo la tecnología generará beneficios económicos directos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="El texto resalta que los destinos deben capturar precisamente a los viajeros hiperconectados, cuya demanda es creciente.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">La baja demanda de experiencias tecnológicas por parte de los nuevos perfiles de viajeros.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El texto resalta que los destinos deben capturar precisamente a los viajeros hiperconectados, cuya demanda es creciente.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      
+        <div class="question" data-index="14">
+          <div class="q-header">
+            <span class="q-number">Pregunta 15</span>
+            <span class="q-of">/ 15</span>
+          </div>
+          <div class="q-text">¿Cuál es el propósito didáctico de utilizar simulaciones de diagnóstico basadas en la norma UNE 178502 en la formación de estudiantes de turismo?</div>
+          
+        <div class="hint-box">
+          <button class="hint-toggle" onclick="this.parentElement.classList.toggle('show')">
+            💡 Hint
+          </button>
+          <div class="hint-content">Considere cómo la práctica con indicadores reales ayuda a transitar de la teoría a la consultoría profesional.</div>
+        </div>
+      
+          <div class="options">
+        <div class="option-wrapper">
+          <button class="option" data-label="A" data-correct="false" data-rationale="La pauta didáctica sugiere un análisis reflexivo y práctico de los ejes, no un enfoque basado únicamente en la memorización de listas.">
+            <span class="opt-label">A</span>
+            <span class="opt-text">Memorizar los 200 requisitos de la metodología para aprobar el examen de certificación nacional.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="A">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La pauta didáctica sugiere un análisis reflexivo y práctico de los ejes, no un enfoque basado únicamente en la memorización de listas.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="B" data-correct="true" data-rationale="La aplicación de indicadores reales prepara al futuro profesional para realizar auditorías y planes de acción en municipios concretos.">
+            <span class="opt-label">B</span>
+            <span class="opt-text">Permitir que el estudiante identifique brechas reales y proponga hojas de ruta basadas en indicadores técnicos y cooperación.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="B">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">La aplicación de indicadores reales prepara al futuro profesional para realizar auditorías y planes de acción en municipios concretos.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="C" data-correct="false" data-rationale="El objetivo de la carrera es la planificación y gestión turística, no la ingeniería de software o programación avanzada.">
+            <span class="opt-label">C</span>
+            <span class="opt-text">Enseñar a los alumnos a programar gemelos digitales utilizando código fuente de TerriaJS.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="C">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El objetivo de la carrera es la planificación y gestión turística, no la ingeniería de software o programación avanzada.</div>
+          </div>
+        </div>
+      
+        <div class="option-wrapper">
+          <button class="option" data-label="D" data-correct="false" data-rationale="El sello lo obtienen los territorios tras una auditoría oficial, no los estudiantes por realizar una tarea académica.">
+            <span class="opt-label">D</span>
+            <span class="opt-text">Garantizar que todos los estudiantes obtengan el sello de SEGITTUR para sus proyectos personales.</span>
+          </button>
+          <div class="option-feedback hidden" data-for="D">
+            <div class="feedback-status"></div>
+            <div class="feedback-rationale">El sello lo obtienen los territorios tras una auditoría oficial, no los estudiantes por realizar una tarea académica.</div>
+          </div>
+        </div>
+      </div>
+          <button class="next-btn hidden">Siguiente pregunta →</button>
+        </div>
+      </div>
+  <div class="results" id="results">
+    <h2>¡Cuestionario completado!</h2>
+    <div class="score" id="score">0%</div>
+    <div class="score-text" id="score-text"></div>
+    <button class="restart-btn" onclick="restart()">Intentar de nuevo</button>
+  </div>
+</div>
+<script>
+const quizData = [{"question":"¿Cuál es la diferencia fundamental entre el enfoque de una Ciudad Inteligente y un Destino Turístico Inteligente (DTI) según el marco conceptual?","hint":"Piense en quiénes son los beneficiarios finales de las intervenciones en cada modelo.","options":[{"label":"A","text":"El DTI se enfoca exclusivamente en la digitalización de hoteles, mientras que la Ciudad Inteligente se ocupa del transporte público general.","isCorrect":false,"rationale":"Aunque el sector privado es parte de la cadena de valor, el DTI es un modelo multidimensional que abarca gobernanza, sostenibilidad y accesibilidad en todo el territorio."},{"label":"B","text":"No existen diferencias operativas, ya que un DTI es simplemente una marca comercial para una Ciudad Inteligente costera.","isCorrect":false,"rationale":"El modelo DTI implica una delimitación geográfica y operativa distinta, centrada en la cadena de valor turística y el equilibrio entre turistas y residentes."},{"label":"C","text":"La Ciudad Inteligente utiliza sensores de Internet de las Cosas (IoT), pero el DTI se basa únicamente en el uso de redes sociales para la promoción.","isCorrect":false,"rationale":"Ambos modelos comparten infraestructuras tecnológicas como el IoT, pero el DTI las aplica específicamente para gestionar la experiencia turística y el impacto territorial."},{"label":"D","text":"La Ciudad Inteligente prioriza la calidad de vida de los ciudadanos permanentes, mientras que el DTI equilibra la experiencia del visitante con la habitabilidad de la comunidad receptora.","isCorrect":true,"rationale":"El modelo DTI adapta la gestión urbana para integrar las necesidades específicas del ecosistema turístico y sus flujos dinámicos, a diferencia del enfoque meramente residencial de la ciudad inteligente."}]},{"question":"De acuerdo con la metodología de SEGITTUR, ¿qué requisito debe cumplir un destino para obtener el sello oficial de 'Destino Turístico Inteligente'?","hint":"Considere el umbral porcentual establecido para pasar de ser un destino 'adherido' a uno 'certificado'.","options":[{"label":"A","text":"Alcanzar un grado de cumplimiento igual o superior al $80\\%$ en los indicadores de la auditoría.","isCorrect":true,"rationale":"El umbral del $80\\%$ determina la distinción oficial como destino consolidado, mientras que niveles inferiores permiten solo la clasificación como 'adherido'."},{"label":"B","text":"Contar con un presupuesto de inversión tecnológica superior a los diez millones de euros anuales.","isCorrect":false,"rationale":"La metodología evalúa el cumplimiento de requisitos en cinco ejes estratégicos, no el volumen bruto de la inversión económica."},{"label":"C","text":"Haber digitalizado al menos el $50\\%$ de las empresas de transporte local.","isCorrect":false,"rationale":"Si bien la tecnología es un eje, la certificación depende de un conjunto integral de más de 200 requisitos que abarcan gobernanza, accesibilidad y sostenibilidad."},{"label":"D","text":"Implementar un Gemelo Digital en menos de un año tras la adhesión a la red.","isCorrect":false,"rationale":"El Gemelo Digital es una herramienta avanzada opcional, no un requisito porcentual para la certificación inicial de SEGITTUR."}]},{"question":"¿Qué función cumple la norma UNE 178503 dentro del ecosistema de normalización de los DTI?","hint":"Relacione el código de la norma con la necesidad de que diferentes máquinas 'hablen' el mismo idioma de datos.","options":[{"label":"A","text":"Regular la conexión de los hoteles inteligentes con las plataformas públicas de gestión de datos.","isCorrect":false,"rationale":"La integración de establecimientos privados como los hoteles está normada por la UNE 178504."},{"label":"B","text":"Gestionar el despliegue de infraestructura WiFi en entornos litorales.","isCorrect":false,"rationale":"Dicha función corresponde específicamente a la norma UNE 178507."},{"label":"C","text":"Establecer una semántica y ontología de datos común para permitir la interoperabilidad de los sistemas de información.","isCorrect":true,"rationale":"Esta norma define un lenguaje de datos unificado que permite que diferentes plataformas y proveedores compartan información de forma coherente."},{"label":"D","text":"Definir los criterios de accesibilidad física para las playas y parques naturales.","isCorrect":false,"rationale":"La accesibilidad se gestiona de forma transversal en los ejes, pero la norma 178503 se centra específicamente en el componente lógico de los datos."}]},{"question":"En la fórmula de la Capacidad de Carga Dinámica ($CCD = CCF \\cdot \\prod FC_i$), ¿qué representa el factor de corrección $FC_s$?","hint":"Considere variables relacionadas con el distanciamiento físico y la gestión de riesgos ante catástrofes naturales.","options":[{"label":"A","text":"Factor de calidad sensorial relacionado con los niveles de ruido y temperatura.","isCorrect":false,"rationale":"Las condiciones ambientales sensoriales se agrupan bajo el factor $FC_a$ (aire/ambiente)."},{"label":"B","text":"Factor de sostenibilidad ambiental relacionado con la gestión de residuos sólidos.","isCorrect":false,"rationale":"Aunque es un concepto de sostenibilidad, la fórmula analizada en el material asigna $FC_s$ específicamente a la seguridad y emergencias."},{"label":"C","text":"Factor de seguridad y salud, que incluye aforos en recintos cerrados y condiciones de evacuación.","isCorrect":true,"rationale":"El subíndice 's' se refiere a la seguridad física y sanitaria, adaptando la capacidad de carga a riesgos o normativas de distanciamiento."},{"label":"D","text":"Factor de saturación del transporte público y plazas de estacionamiento.","isCorrect":false,"rationale":"La movilidad y congestión de transporte se asocia generalmente al factor $FC_m$."}]},{"question":"De acuerdo con el balance de flujos para la ocupación peatonal, si $F_{in} > F_{out}$ en un atractivo turístico, ¿qué ocurre con el volumen de visitantes $N_t$?","hint":"Piense en el resultado de llenar un recipiente donde entra más agua de la que sale.","options":[{"label":"A","text":"El volumen de visitantes $N_t$ aumenta progresivamente, incrementando el riesgo de alcanzar la saturación crítica.","isCorrect":true,"rationale":"Si la tasa de entrada supera a la de salida, la densidad acumulada crece, lo que requiere intervenciones de dispersión de flujos."},{"label":"B","text":"La tasa de evacuación se reduce automáticamente por efecto del algoritmo de inteligencia artificial.","isCorrect":false,"rationale":"La IA puede predecir o sugerir cambios, pero el balance matemático de flujos simplemente describe la acumulación física de personas."},{"label":"C","text":"El atractivo se clasifica inmediatamente como 'insostenible' sin importar el valor de $N_t$.","isCorrect":false,"rationale":"La insostenibilidad ocurre cuando se superan los límites de carga, no simplemente porque el flujo de entrada sea positivo."},{"label":"D","text":"El volumen de visitantes permanece constante debido a la capacidad de carga física teórica.","isCorrect":false,"rationale":"La capacidad física es un límite máximo, pero el volumen real fluctúa dinámicamente según la diferencia entre entradas y salidas."}]},{"question":"¿Cuál es un beneficio directo del uso de Realidad Aumentada (RA) en la gestión de recursos patrimoniales vulnerables?","hint":"Considere cómo se puede mostrar algo que ya no existe físicamente sin tocar las ruinas actuales.","options":[{"label":"A","text":"Permite realizar reconstrucciones virtuales de monumentos degradados sin alterar físicamente el soporte original.","isCorrect":true,"rationale":"La RA ofrece una solución didáctica que evita intervenciones físicas agresivas en yacimientos arqueológicos, preservando el patrimonio."},{"label":"B","text":"Reduce los costos de mantenimiento de las infraestructuras de telecomunicaciones subacuáticas.","isCorrect":false,"rationale":"La RA se aplica a la capa de experiencia del usuario y musealización, no al mantenimiento de hardware de red básico."},{"label":"C","text":"Garantiza que el $100\\%$ de los visitantes realicen compras en los comercios locales.","isCorrect":false,"rationale":"La RA puede incentivar el desplazamiento hacia zonas comerciales mediante gamificación, pero no garantiza transacciones económicas directas."},{"label":"D","text":"Elimina la necesidad de guías turísticos humanos al automatizar las traducciones.","isCorrect":false,"rationale":"Aunque asiste en la comunicación, el material destaca la RA como herramienta de visualización e interacción espacial, no de reemplazo laboral."}]},{"question":"En el caso de éxito de Barcelona, ¿cuál es el pilar técnico que sustenta su plataforma Smart City para fomentar la interoperabilidad?","hint":"Piense en el modelo de licenciamiento de software que permite compartir el conocimiento sin restricciones comerciales.","options":[{"label":"A","text":"El uso de software de código abierto (open source) para evitar licencias propietarias.","isCorrect":true,"rationale":"La adopción de software libre permite una mayor transparencia, reducción de costos y facilidad para integrar datos de diferentes departamentos municipales."},{"label":"B","text":"La prohibición total del acceso de turistas a los barrios tradicionales mediante barreras físicas.","isCorrect":false,"rationale":"Barcelona utiliza la tecnología para gestionar y dispersar flujos, no para cerrar distritos de forma analógica permanente."},{"label":"C","text":"La centralización de todos los datos en una única empresa tecnológica privada extranjera.","isCorrect":false,"rationale":"El modelo de Barcelona busca la soberanía tecnológica y el acceso abierto a los datos, evitando la dependencia de un solo proveedor privado."},{"label":"D","text":"La implementación de una red de robots de seguridad en lugar de sensores WiFi.","isCorrect":false,"rationale":"Aunque Tokio apuesta por la robótica, Barcelona se enfoca en la sensorización y el análisis de datos abiertos para la convivencia social."}]},{"question":"¿Qué herramienta utiliza Singapur para actuar como canalizador unificado de contenidos y servicios turísticos hacia el sector privado?","hint":"Busque el repositorio que permite la conexión entre la administración pública y los desarrolladores privados mediante interfaces de programación.","options":[{"label":"A","text":"Tourism Information and Services Hub (TIH), gestionado mediante APIs abiertas.","isCorrect":true,"rationale":"El TIH centraliza la oferta y los datos, permitiendo que las empresas desarrollen sus propias soluciones tecnológicas consumiendo información oficial."},{"label":"B","text":"La plataforma Amaia para la gestión del alumbrado público inteligente.","isCorrect":false,"rationale":"Amaia es un ejemplo de plataforma IoT transversal mencionada en el texto, pero no es el hub de servicios turísticos de Singapur."},{"label":"C","text":"El portal Open Data BCN para la planificación de festivales metropolitanos.","isCorrect":false,"rationale":"Este portal es la pieza central de la estrategia de gestión de datos de Barcelona."},{"label":"D","text":"Tokyo Digital Twin Project, integrado con el sistema nacional PLATEAU.","isCorrect":false,"rationale":"Este proyecto pertenece a la estrategia de Japón, no a la de Singapur."}]},{"question":"En la estrategia 'Smart Tokyo', ¿cuál es el objetivo principal de los ensayos operativos realizados en el distrito de Takeshiba?","hint":"Considere la propensión de la geografía japonesa a sufrir catástrofes y cómo la tecnología puede salvar vidas.","options":[{"label":"A","text":"Monitorear exclusivamente la calidad del agua en las playas para el turismo náutico.","isCorrect":false,"rationale":"Aunque importante, el enfoque de Takeshiba es la coordinación de emergencias y la navegación turística en un entorno urbano denso."},{"label":"B","text":"Reducir los tiempos de respuesta y mejorar la eficiencia de la evacuación ante desastres naturales.","isCorrect":true,"rationale":"La resiliencia urbana es clave en Tokio, utilizando gemelos digitales para optimizar la seguridad de ciudadanos y turistas ante sismos o inundaciones."},{"label":"C","text":"Promover la venta de artesanías locales mediante el uso de códigos QR en las calles.","isCorrect":false,"rationale":"El uso de QR para artesanías se menciona como un ejemplo de intervención en Sarchí, Costa Rica, no en Takeshiba."},{"label":"D","text":"Eliminar por completo el uso de transporte público para priorizar el senderismo fluvial.","isCorrect":false,"rationale":"Tokio es una megaciudad que busca optimizar el transporte multimodal, no eliminarlo por actividades rurales."}]},{"question":"¿Cuál fue el primer destino de América Latina en recibir la certificación oficial como DTI por parte de SEGITTUR?","hint":"Este destino mexicano es famoso por su bebida homónima y su paisaje agavero.","options":[{"label":"A","text":"Tequila (México).","isCorrect":true,"rationale":"Tequila obtuvo la certificación en 2021, destacando por su modelo de inteligencia no tecnológica y cooperación público-privada."},{"label":"B","text":"Montevideo (Uruguay).","isCorrect":false,"rationale":"Montevideo se certificó en 2023, aprovechando su infraestructura de telecomunicaciones preexistente."},{"label":"C","text":"Medellín (Colombia).","isCorrect":false,"rationale":"Medellín obtuvo la certificación en 2022, después de un proceso de mejora en sus indicadores de madurez desde 2020."},{"label":"D","text":"Asunción (Paraguay).","isCorrect":false,"rationale":"Al igual que Montevideo, Asunción recibió su distinción en 2023 centrada en la recuperación de su centro histórico."}]},{"question":"¿Qué eje se identifica como el más rezagado en los destinos turísticos de América Latina según el análisis de barreras estructurales?","hint":"Piense en las dificultades físicas de un turista en silla de ruedas en una ciudad colonial antigua.","options":[{"label":"A","text":"Accesibilidad.","isCorrect":true,"rationale":"La falta de infraestructuras básicas para personas con discapacidad y la alta inversión requerida para adaptar cascos históricos lo sitúan como el eje crítico."},{"label":"B","text":"Innovación.","isCorrect":false,"rationale":"La región muestra dinamismo en proyectos creativos y laboratorios de innovación abierta, a pesar de las limitaciones presupuestarias."},{"label":"C","text":"Tecnología.","isCorrect":false,"rationale":"Aunque hay brechas, la tecnología se percibe como una oportunidad de inversión, mientras que la accesibilidad física presenta mayores deudas históricas."},{"label":"D","text":"Gobernanza.","isCorrect":false,"rationale":"La gobernanza es el motor de los DTI en la región, aunque se enfrenta a desafíos de desalineación de políticas públicas."}]},{"question":"En el contexto de Big Data, ¿qué permite realizar la técnica de 'Reconocimiento de Entidades Nombradas' (NER) aplicada por herramientas como Cicerone?","hint":"Se relaciona con el procesamiento de lenguaje natural y la identificación de palabras clave en búsquedas.","options":[{"label":"A","text":"Rastrear temas recurrentes y lugares de interés más citados en las consultas de los turistas para anticipar demandas.","isCorrect":true,"rationale":"El NER identifica nombres de lugares, marcas o conceptos en lenguaje natural, transformando textos no estructurados en conocimiento estratégico."},{"label":"B","text":"Aumentar la intensidad del alumbrado público cuando detecta la presencia de un ciudadano local.","isCorrect":false,"rationale":"Esto es una función de los sensores de presencia en redes IoT, no de análisis semántico de datos masivos."},{"label":"C","text":"Calcular automáticamente el precio del transporte público en función de la huella de carbono del viajero.","isCorrect":false,"rationale":"Dicha función requeriría algoritmos de tasación dinámica y medición de emisiones, no simplemente reconocimiento de entidades lingüísticas."},{"label":"D","text":"Bloquear el acceso de turistas internacionales a zonas de alta sensibilidad ambiental.","isCorrect":false,"rationale":"El Big Data se usa para conocer el comportamiento, no para establecer prohibiciones físicas de forma automatizada por reconocimiento de texto."}]},{"question":"¿Qué aspecto aborda la norma UNE 178510 dentro de la cadena de valor turística?","hint":"Considere la norma que se aplica directamente a los prestadores de servicios privados.","options":[{"label":"A","text":"La metodología para optimizar el posicionamiento SEO de las webs de destino.","isCorrect":false,"rationale":"La optimización en buscadores está regulada específicamente por la norma UNE 178506."},{"label":"B","text":"El marco de trabajo para la creación de aplicaciones móviles accesibles para el turista.","isCorrect":false,"rationale":"Los criterios para apps móviles se detallan en la norma UNE 178508."},{"label":"C","text":"El modelo de recogida ética y procesamiento de formatos de datos turísticos.","isCorrect":false,"rationale":"Dicha regulación de datos corresponde a la norma UNE 178509."},{"label":"D","text":"Los requisitos para la transformación digital de la Empresa Turística Inteligente (ETI).","isCorrect":true,"rationale":"Esta norma extiende el modelo de inteligencia a las unidades productivas privadas (hoteles, agencias, restaurantes) que componen el destino."}]},{"question":"De acuerdo al estudio sobre DTI en Latinoamérica, ¿cuál es una de las principales barreras que frena la inversión del capital privado?","hint":"Piense en la duda financiera de un empresario antes de comprar equipamiento tecnológico costoso.","options":[{"label":"A","text":"La prohibición gubernamental de usar datos abiertos en aplicaciones móviles.","isCorrect":false,"rationale":"El problema no es la prohibición, sino la desarticulación entre los portales de datos abiertos y las necesidades reales del sector turístico."},{"label":"B","text":"El exceso de personal técnico calificado que encarece los salarios en el sector.","isCorrect":false,"rationale":"Al contrario, el material menciona un déficit de competencias digitales y talento humano calificado como una barrera estructural."},{"label":"C","text":"La incertidumbre severa sobre el Retorno de la Inversión (ROI).","isCorrect":true,"rationale":"Las empresas dudan en invertir debido a la falta de modelos de negocio claros que demuestren cómo la tecnología generará beneficios económicos directos."},{"label":"D","text":"La baja demanda de experiencias tecnológicas por parte de los nuevos perfiles de viajeros.","isCorrect":false,"rationale":"El texto resalta que los destinos deben capturar precisamente a los viajeros hiperconectados, cuya demanda es creciente."}]},{"question":"¿Cuál es el propósito didáctico de utilizar simulaciones de diagnóstico basadas en la norma UNE 178502 en la formación de estudiantes de turismo?","hint":"Considere cómo la práctica con indicadores reales ayuda a transitar de la teoría a la consultoría profesional.","options":[{"label":"A","text":"Memorizar los 200 requisitos de la metodología para aprobar el examen de certificación nacional.","isCorrect":false,"rationale":"La pauta didáctica sugiere un análisis reflexivo y práctico de los ejes, no un enfoque basado únicamente en la memorización de listas."},{"label":"B","text":"Permitir que el estudiante identifique brechas reales y proponga hojas de ruta basadas en indicadores técnicos y cooperación.","isCorrect":true,"rationale":"La aplicación de indicadores reales prepara al futuro profesional para realizar auditorías y planes de acción en municipios concretos."},{"label":"C","text":"Enseñar a los alumnos a programar gemelos digitales utilizando código fuente de TerriaJS.","isCorrect":false,"rationale":"El objetivo de la carrera es la planificación y gestión turística, no la ingeniería de software o programación avanzada."},{"label":"D","text":"Garantizar que todos los estudiantes obtengan el sello de SEGITTUR para sus proyectos personales.","isCorrect":false,"rationale":"El sello lo obtienen los territorios tras una auditoría oficial, no los estudiantes por realizar una tarea académica."}]}];
+const tr = {"correct":"¡Correcto!","incorrect":"Incorrecto","next":"Siguiente pregunta →","seeResults":"Ver resultados","complete":"¡Cuestionario completado!","scoreText":"Obtuviste {correct} de {total} correctas","tryAgain":"Intentar de nuevo","rightAnswer":"Respuesta correcta","notQuite":"No del todo"};
+let currentQ = 0, correctCount = 0, answered = false;
+
+function init() {
+  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === 0));
+  updateProgress();
+  document.querySelectorAll('.option').forEach(opt => opt.addEventListener('click', () => selectOption(opt)));
+  document.querySelectorAll('.next-btn').forEach(btn => btn.addEventListener('click', nextQuestion));
+}
+
+function selectOption(opt) {
+  if (answered) return;
+  answered = true;
+  const q = opt.closest('.question');
+  const options = q.querySelectorAll('.option');
+  const nextBtn = q.querySelector('.next-btn');
+  const isCorrect = opt.dataset.correct === 'true';
+  
+  // Mark all options as disabled
+  options.forEach(o => o.classList.add('disabled'));
+  
+  // Style selected option
+  opt.classList.add('selected', isCorrect ? 'correct' : 'incorrect');
+  
+  // Show correct answer if wrong
+  if (!isCorrect) {
+    const correctOpt = [...options].find(o => o.dataset.correct === 'true');
+    if (correctOpt) correctOpt.classList.add('show-correct');
+  }
+  
+  if (isCorrect) correctCount++;
+  
+  // Show feedback for ALL options that have rationale
+  options.forEach(o => {
+    const wrapper = o.closest('.option-wrapper');
+    const feedback = wrapper.querySelector('.option-feedback');
+    const rationale = o.dataset.rationale;
+    const isThisCorrect = o.dataset.correct === 'true';
+    
+    if (rationale && rationale.trim()) {
+      feedback.classList.remove('hidden');
+      feedback.classList.add(isThisCorrect ? 'correct-feedback' : 'incorrect-feedback');
+      
+      const statusEl = feedback.querySelector('.feedback-status');
+      statusEl.className = 'feedback-status ' + (isThisCorrect ? 'correct' : 'incorrect');
+      statusEl.innerHTML = isThisCorrect 
+        ? '✓ ' + tr.rightAnswer
+        : '✗ ' + tr.notQuite;
+    }
+  });
+  
+  nextBtn.classList.remove('hidden');
+  if (currentQ === quizData.length - 1) nextBtn.textContent = tr.seeResults;
+}
+
+function nextQuestion() {
+  answered = false;
+  currentQ++;
+  if (currentQ >= quizData.length) { showResults(); return; }
+  document.querySelectorAll('.question').forEach((q, i) => q.classList.toggle('active', i === currentQ));
+  updateProgress();
+}
+
+function updateProgress() {
+  document.querySelector('.progress-fill').style.width = (currentQ / quizData.length * 100) + '%';
+}
+
+function showResults() {
+  document.querySelectorAll('.question').forEach(q => q.classList.remove('active'));
+  document.getElementById('results').classList.add('active');
+  const pct = Math.round((correctCount / quizData.length) * 100);
+  document.getElementById('score').textContent = pct + '%';
+  document.getElementById('score-text').textContent = tr.scoreText.replace('{correct}', correctCount).replace('{total}', quizData.length);
+  document.querySelector('.progress-fill').style.width = '100%';
+}
+
+function restart() {
+  currentQ = 0; correctCount = 0; answered = false;
+  document.getElementById('results').classList.remove('active');
+  document.querySelectorAll('.question').forEach((q, i) => {
+    q.classList.toggle('active', i === 0);
+    q.querySelectorAll('.option').forEach(o => o.classList.remove('selected', 'correct', 'incorrect', 'disabled', 'show-correct'));
+    q.querySelectorAll('.option-feedback').forEach(f => {
+      f.classList.add('hidden');
+      f.classList.remove('correct-feedback', 'incorrect-feedback');
+    });
+    const btn = q.querySelector('.next-btn');
+    btn.classList.add('hidden');
+    btn.textContent = tr.next;
+  });
+  updateProgress();
+}
+
+init();
+</script>
+</body>
+</html>
